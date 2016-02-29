@@ -1,4 +1,7 @@
 import argparse
+import os
+import sys
+sys.path.append("swig")
 
 from snap import *
 # from models import CesnaModel
@@ -22,9 +25,10 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    G = PUNGraph.New()
-    FIn = TFIn(TStr(args.edges))
-    G = G.Load(FIn)
+    G = LoadEdgeList(PUNGraph, args.edges, 0, 1)
+    G.Dump()
+
+    
     # G = UndirectedGraph(args.edges, args.attribs, args.attrib_names)
     # M = CesnaModel(G, args.num_coms, args.min_coms, args.max_coms, args.attr_weight,
     #                args.reg, args.alpha, args.beta)
