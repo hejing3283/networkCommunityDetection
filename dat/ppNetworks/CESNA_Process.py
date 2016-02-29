@@ -12,20 +12,37 @@ def Proc_All(Net, Path, Mut):
 
     Nodes = {}
 
+    Output = set()
+
+    for line in Input_Net[1:]:
+        line_s = line.split('\t')
+        if line_s[0] not in Nodes:
+            Nodes[line_s[0]] = node_counter
+            node_counter += 1
+        if line_s[1] not in Nodes:
+            Nodes[line_s[1]] = node_counter
+            node_counter += 1
+        # print str(Nodes[line_s[0]]) + '\t' + str(Nodes[line_s[1]]) + '\n'
+        Output.update([str(Nodes[line_s[0]]) + '\t' + str(Nodes[line_s[1]]) + '\n'])
+        # print Output
+
+    print len(Output)
+
     with open('pp_networks_num.txt', 'w') as O:
-        for line in Input_Net[1:]:
-            line_s = line.split('\t')
-            if line_s[0] not in Nodes:
-                Nodes[line_s[0]] = node_counter
-                node_counter += 1
-            if line_s[1] not in Nodes:
-                Nodes[line_s[1]] = node_counter
-                node_counter += 1
-            O.write(str(Nodes[line_s[0]]) + '\t' + str(Nodes[line_s[1]]) + '\n')
-            # O.write(line_s[0] + '\t' + line_s[1] + '\n')
-        # for line in Input[1:]:
-        #     line_s = line.split('\t')
-        #     O.write(line_s[0] + '\t' + line_s[1] + '\n')
+        for edge in Output:
+            O.write(edge)
+
+    # with open('pp_networks_num.txt', 'w') as O:
+    #     for line in Input_Net[1:]:
+    #         line_s = line.split('\t')
+    #         if line_s[0] not in Nodes:
+    #             Nodes[line_s[0]] = node_counter
+    #             node_counter += 1
+    #         if line_s[1] not in Nodes:
+    #             Nodes[line_s[1]] = node_counter
+    #             node_counter += 1
+    #         O.write(str(Nodes[line_s[0]]) + '\t' + str(Nodes[line_s[1]]) + '\n')
+
 
     with open(Path, 'r') as I_Path:
         Input_Path = I_Path.readlines()
