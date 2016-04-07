@@ -6,7 +6,7 @@ Proc_Net processes the edges and Proc_Feat processes the features
 Currently does not differentiate between mutations
 '''
 
-def Proc_All(Net, Path, Mut):
+def Proc_All_1(Net, Path, Mut):
     with open(Net, 'r') as I_Net:
         Input_Net = I_Net.readlines()
 
@@ -30,7 +30,7 @@ def Proc_All(Net, Path, Mut):
         Output.update([str(Nodes[line_s[0]]) + '\t' + str(Nodes[line_s[1][:-1]]) + '\n'])
 
     # Need to know number of nodes for Svinet
-    print node_counter
+    print node_counter - 1
 
     Output = sorted(Output)
 
@@ -180,6 +180,73 @@ def Proc_All(Net, Path, Mut):
 #                 line_s = line.split('\t')
 #                 O1.write(line_s[0] + '\t' + str(count) + '\n')
 
+def Proc_All_2(Net, Topics):
+    with open(Net, 'r') as I_Net:
+        Input_Net = I_Net.readlines()
+
+    node_counter = 1
+
+    Nodes = {}
+
+    # Use set to catch repetitions
+    Output = set()
+
+    for line in Input_Net[1:]:
+        line_s = line.split('\t')
+        # Checks if the nodes are in the dictionary
+        if line_s[0] not in Nodes:
+            Nodes[line_s[0]] = node_counter
+            node_counter += 1
+        # To account for '\n's at the end
+        if line_s[1][:-1] not in Nodes:
+            Nodes[line_s[1][:-1]] = node_counter
+            node_counter += 1
+        Output.update([str(Nodes[line_s[0]]) + '\t' + str(Nodes[line_s[1][:-1]]) + '\n'])
+
+    # Need to know number of nodes for Svinet
+    print node_counter - 1
+
+    Output = sorted(Output)
+
+    with open('network_textiq_num.txt', 'w') as O:
+        for edge in Output:
+            O.write(edge)
+
+    with open(Topics, 'r') as I_Topic:
+        Input_Topic = I_Topic.readlines()
+
+    print len(Input_Topic[1:])
+
+    feat_num_out = set()
+    NA = set()
+
+    # For topics, remove first line
+    for line in Input_Topic[1:]:
+        line_s = line.split('\t')
+        # Add to set only if node exists
+        for val in range(2, 21, 2):
+            # print val
+            try:
+                # print Nodes[val][2]
+                feat_num_out.update([str(Nodes[line_s[1]]) + '\t' + str(line_s[val]) + '\n'])
+                NA.update([(Nodes[val], str(line_s[val]))])
+                # print NA
+            except KeyError:
+                pass
+
+    NA_array = np.zeros((node_counter, 50))
+    for i in NA:
+        NA_array[i[0]-1, i[1]-1] = 1
+
+    with open('network_textiq_feat.txt', 'w') as O1:
+        for i in feat_num_out:
+            O1.write(i)
+
+    with open('NA.txt', 'w') as O3:
+        for i in NA_array:
+            O3.write('\t'.join([str(e) for e in i]) + '\n')
+
+    return NA_array
 
 if __name__ == '__main__':
-    Proc_All('network.txt', 'nodes_attributes_pathway.txt', 'nodes_attributes_mutation.txt')
+    Proc_All_2('network_textiq.txt', 'topicModel.mallet')

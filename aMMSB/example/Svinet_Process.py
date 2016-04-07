@@ -44,7 +44,7 @@ def Proc_Svinet(Net):
     # Got 35060 nodes and 419 communities
     print node_counter - 1
 
-    # Output = sorted(Output)
+    Output = sorted(Output)
 
     with open('network_textiq_num.txt', 'w') as O:
         for edge in Output:
