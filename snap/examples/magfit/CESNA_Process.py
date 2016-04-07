@@ -218,6 +218,7 @@ def Proc_All_2(Net, Topics):
     print len(Input_Topic[1:])
 
     feat_num_out = set()
+    feat_num_not_in = set()
     NA = set()
 
     # For topics, remove first line
@@ -229,10 +230,12 @@ def Proc_All_2(Net, Topics):
             try:
                 # print Nodes[val][2]
                 feat_num_out.update([str(Nodes[line_s[1]]) + '\t' + str(line_s[val]) + '\n'])
-                NA.update([(Nodes[val], str(line_s[val]))])
+                NA.update([(Nodes[line_s[1]], int(line_s[val]))])
                 # print NA
             except KeyError:
-                pass
+                feat_num_not_in.update([line_s[1]])
+
+    # print NA
 
     NA_array = np.zeros((node_counter, 50))
     for i in NA:
@@ -245,6 +248,8 @@ def Proc_All_2(Net, Topics):
     with open('NA.txt', 'w') as O3:
         for i in NA_array:
             O3.write('\t'.join([str(e) for e in i]) + '\n')
+
+    print feat_num_not_in
 
     return NA_array
 
