@@ -26,23 +26,28 @@ def Proc_Svinet(Net):
         if line_s[1][:-1] not in Nodes:
             Nodes[line_s[1][:-1]] = node_counter
             node_counter += 1
-        Output.update([str(Nodes[line_s[0]]) + '\t' + str(Nodes[line_s[1][:-1]]) + '\n'])
+        x = str(Nodes[line_s[0]]) + '\t' + str(Nodes[line_s[1][:-1]]) + '\n'
+        y = str(Nodes[line_s[1][:-1]]) + '\t' + str(Nodes[line_s[0]]) + '\n'
+        if x not in Output and y not in Output:
+            Output.update([str(Nodes[line_s[0]]) + '\t' + str(Nodes[line_s[1][:-1]]) + '\n'])
 
-    # Enable repetitions
-    # with open('pp_networks_rep.txt', 'w') as O:
+    # # Enable repetitions
+    # with open('textiq_rep.txt', 'w') as O:
     #     for line in Input_Net[1:]:
     #         line_s = line.split('\t')
     #         if line_s[0] not in Nodes:
     #             Nodes[line_s[0]] = node_counter
     #             node_counter += 1
-    #         if line_s[1] not in Nodes:
-    #             Nodes[line_s[1]] = node_counter
+    #         if line_s[1][:-1] not in Nodes:
+    #             Nodes[line_s[1][:-1]] = node_counter
     #             node_counter += 1
-    #         O.write(str(Nodes[line_s[0]]) + '\t' + str(Nodes[line_s[1]]) + '\n')
+    #         O.write(str(Nodes[line_s[0]]) + '\n' + str(Nodes[line_s[1][:-1]]) + '\n')
 
     # Need to know number of nodes for Svinet, checked 3610 (5197 wrong) for pp network and 1494 for 1912.edges
     # Got 35060 nodes and 419 communities
     print node_counter - 1
+
+    # Have 16082 non-unique nodes for Textiq data and 3605 for pp_network
 
     Output = sorted(Output)
 
