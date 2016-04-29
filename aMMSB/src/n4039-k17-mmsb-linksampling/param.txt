@@ -1,0 +1,70 @@
+nodes: 4039
+groups: 17
+t: 2
+minibatch (rpair or stratified rpair options only): 2019
+mbsize: 1
+alpha: 0.058823529
+sbm_alpha: 0.058823529
+heldout_ratio: 0.010000000
+precision_ratio: 0.001000000
+stratified: False
+delaylearn: False
+nolambda: False
+randomnode: False
+gen: False
+undirected: True
+gap: False
+nthreads: 0
+stopthresh: 0.000010000
+infthresh: 0.000000000
+randzeros: False
+benchmark: False
+max iterations: 0
+seed: 0.000000000
+use validation stop: True
+gamma location: 
+link_thresh: 0.500000000
+lt_min_deg: 0
+epsilon: 0.000000000
+sets_mini_batch: 40
+use_init_communities: False
+load_test_sets: False
+val_load: False
+val_file_location: 
+test_load: False
+test_file_location: 
+reportfreq: 1
+eta_type: uniform
+total pairs: 8154741
+ones_prob: 0.003681907
+zeros_prob: 0.996318093
+inference n: 747
+total pairs: 278631.000000000
+ones_prob: 0.107759007
+zeros_prob: 0.892240993
+avg degree: 14.867541471
+max degree: 293
+eta: 
+[ 1 1 
+  1 1 
+  1 1 
+  1 1 
+  1 1 
+  1 1 
+  1 1 
+  1 1 
+  1 1 
+  1 1 
+  1 1 
+  1 1 
+  1 1 
+  1 1 
+  1 1 
+  1 1 
+  1 1 
+]
+load validation from file:: False
+heldout ratio: 0.010000000
+validation pairs (1s and 0s): 300
+network ones: 30025
+network singles: 3292
