@@ -123,7 +123,7 @@ private:
   double _kappa;
   double _nodetau0;
   double _nodekappa;
-  
+
   double _rhot;
   Array _noderhot;
 
@@ -175,9 +175,17 @@ LinkSampling::set_dir_exp(const Matrix &u, Matrix &exp)
   for (uint32_t i = 0; i < u.m(); ++i) {
     // psi(e[i][j]) - psi(sum(e[i]))
     double s = .0;
-    for (uint32_t j = 0; j < u.n(); ++j) 
+    for (uint32_t j = 0; j < u.n(); ++j)
       s += d[i][j];
     //debug("set_dir_exp: s = %f\n",s);
+
+    // Edits starts here
+    if (s == .0) {
+      printf('Sum = 0');
+      s = .0001;
+    }
+    // Edits ends here
+
     double psi_sum = gsl_sf_psi(s);
     for (uint32_t j = 0; j < u.n(); ++j) {
       //debug("set_dir_exp: d[i][j] = %f\n",d[i][j]);
@@ -193,10 +201,10 @@ LinkSampling::set_dir_exp(uint32_t a, const Matrix &u, Matrix &exp)
   double **e = exp.data();
 
   double s = .0;
-  for (uint32_t j = 0; j < u.n(); ++j) 
+  for (uint32_t j = 0; j < u.n(); ++j)
     s += d[a][j];
   double psi_sum = gsl_sf_psi(s);
-  for (uint32_t j = 0; j < u.n(); ++j) 
+  for (uint32_t j = 0; j < u.n(); ++j)
     e[a][j] = gsl_sf_psi(d[a][j]) - psi_sum;
 }
 
@@ -265,7 +273,7 @@ LinkSampling::edge_likelihood(uint32_t p, uint32_t q, yval_t y) const
 
   debug("estimated pi (%d) = %s\n", p, pi_p.s().c_str());
   debug("estimated pi (%d) = %s\n", q, pi_q.s().c_str());
-  
+
   double s = .0;
   if (y == 1) {
     for (uint32_t z = 0; z < _k; ++z) {
@@ -277,10 +285,10 @@ LinkSampling::edge_likelihood(uint32_t p, uint32_t q, yval_t y) const
   } else { // y == 0
     for (uint32_t z_p = 0; z_p < _k; ++z_p)
       for (uint32_t z_q = 0; z_q < _k; ++z_q) {
-	double brate = (z_p == z_q) ? 
+	double brate = (z_p == z_q) ?
 	  estimate_bernoulli_rate(z_p) : _env.epsilon;
 	s += pi_p[z_p] * pi_q[z_q] * gsl_ran_bernoulli_pdf(y, brate);
-	debug("(%d:%d):0 estimated rate = %f, %f\n", p, q, 
+	debug("(%d:%d):0 estimated rate = %f, %f\n", p, q,
 	      brate, gsl_ran_bernoulli_pdf(y, brate));
       }
   }
@@ -298,28 +306,28 @@ LinkSampling::edge_ok(const Edge &e) const
 {
   if (e.first == e.second)
     return false;
-  
+
   const SampleMap::const_iterator u = _test_map.find(e);
   if (u != _test_map.end())
     return false;
-  
+
   const SampleMap::const_iterator w = _validation_map.find(e);
   if (w != _validation_map.end())
     return false;
 
   if (_env.create_test_precision_sets) {
     const SampleMap::const_iterator w = _precision_map.find(e);
-    if (w != _precision_map.end()) 
+    if (w != _precision_map.end())
       return false;
   }
 
   if (_env.load_test_sets) {
     const SampleMap::const_iterator u1 = _uniform_map.find(e);
-    if (u1 != _uniform_map.end()) 
-      return false;    
+    if (u1 != _uniform_map.end())
+      return false;
     const SampleMap::const_iterator b1 = _biased_map.find(e);
-    if (b1 != _biased_map.end()) 
-      return false;    
+    if (b1 != _biased_map.end())
+      return false;
   }
 
   return true;

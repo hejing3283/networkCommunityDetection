@@ -53,9 +53,9 @@ class Env {
 public:
   Env(uint32_t N, uint32_t K, bool massive,
       bool sbm, bool batch, bool strat, bool nodelay,
-      bool rpair, bool rnode, bool load, string location, 
-      bool val_load, string val_file_location, 
-      bool test_load, string test_file_location, 
+      bool rpair, bool rnode, bool load, string location,
+      bool val_load, string val_file_location,
+      bool test_load, string test_file_location,
       bool load_test_sets,
       double hol_ratio,
       bool adamic,
@@ -68,7 +68,7 @@ public:
       bool bmark, bool randzeros, bool preprocess,
       bool strid, string groups_fname, bool alogl,
       uint32_t max_iterations, bool uvstop,
-      double rand_seed, 
+      double rand_seed,
       double link_thresh, uint32_t lt_min_deg,
       bool init_comm, string init_comm_fname,
       bool link_sampling, bool gml, bool findk);
@@ -284,9 +284,9 @@ Env::file_str(string dir, string fname)
 inline
 Env::Env(uint32_t N, uint32_t K, bool massive,
 	 bool sbm, bool batch, bool strat, bool nodelay,
-	 bool rpair, bool rnode, bool load, string location, 
-	 bool val_load, string val_file_location, 
-	 bool test_load, string test_file_location, 
+	 bool rpair, bool rnode, bool load, string location,
+	 bool val_load, string val_file_location,
+	 bool test_load, string test_file_location,
 	 bool load_test_sets_opt, double hol_ratio,
 	 bool adamic,
 	 uint32_t scale,
@@ -306,7 +306,7 @@ Env::Env(uint32_t N, uint32_t K, bool massive,
     k(K),
     t(2),
 
-    /* 
+    /*
        PARAMETER: [mini-batch]
 
        mini-batch size is #nodes/2 for random pair and stratified random pair
@@ -329,16 +329,17 @@ Env::Env(uint32_t N, uint32_t K, bool massive,
     illegal_likelihood(-1),
     max_draw_edges(4096),
 
-    /* 
+    /*
        PARAMETER: [meanchangethresh]
 
        The threshold for assessing the convergence of the local step.
      */
-    meanchangethresh(0.00001),
+    // meanchangethresh(0.00001),
+    meanchangethresh(0.001),
 
-    /* 
+    /*
        PARAMETER: [alpha]
-       
+
        The Dirichlet prior parameter on the node mixed-memberships.
     */
     alpha((double)1 / k),
@@ -359,7 +360,7 @@ Env::Env(uint32_t N, uint32_t K, bool massive,
     eta0(0),
     eta1(0),
 
-    /* 
+    /*
        PARAMETER: [heldout_ratio]
 
        The fraction of links that are heldout. An equal number of randomly
@@ -377,7 +378,7 @@ Env::Env(uint32_t N, uint32_t K, bool massive,
     eta0_gen(eta0_dense),
     eta1_gen(eta1_dense),
 
-    /* 
+    /*
        PARAMETER: [reportfreq]
 
        The parameter governs how frequently (in iterations) convergence is
@@ -386,7 +387,7 @@ Env::Env(uint32_t N, uint32_t K, bool massive,
     */
     reportfreq(rfreq),
 
-    /* 
+    /*
        PARAMETER: [epsilon]
 
        The fixed value of the epsilon constant in the assortative MMSB model.
@@ -395,7 +396,7 @@ Env::Env(uint32_t N, uint32_t K, bool massive,
     epsilon(1e-30),
     logepsilon(log(epsilon)),
 
-    /* 
+    /*
        PARAMETER: [nodetau0, nodekappa, tau0, kappa]
 
        The learning parameters for the node membership (gamma) and community
@@ -407,20 +408,21 @@ Env::Env(uint32_t N, uint32_t K, bool massive,
     nodekappa(0.5),
     kappa(0.9),
 
-    /* 
+    /*
        PARAMETER: [online_iterations]
 
        The maximum number of iterations to run in each local step.
     */
     online_iterations(50),
     conv_nupdates(1000),
-    conv_thresh1(1e-04),
+    // conv_thresh1(1e-04),
+    conv_thresh1(1e-03),
     conv_thresh2(1e-02),
 
     nolambda(false),   // unused
     undirected(true),  // must always be true; unused
-    
-    randompair(false), 
+
+    randompair(false),
     randomnode(false),
 
     // bfs
@@ -439,7 +441,7 @@ Env::Env(uint32_t N, uint32_t K, bool massive,
     logl(alogl),
     max_iterations(max_itr),
     seed(rand_seed),
-    
+
     terminate(false),
 
     datfname(dfname),
@@ -455,9 +457,9 @@ Env::Env(uint32_t N, uint32_t K, bool massive,
 
     /*
       PARAMETER: [eta_type]
-      
+
       This sets the prior on the community strengths. Default option computes
-      these strengths based on link density of the network. You can also set 
+      these strengths based on link density of the network. You can also set
       this is to "dense", "sparse", "uniform" or "fromdata" which sets the
       Beta parameters corresponding to dense communities, sparse communities
       etc. To further control this prior, change the Beta parameters of one of
@@ -468,7 +470,7 @@ Env::Env(uint32_t N, uint32_t K, bool massive,
     nmi(nmival),
     ground_truth_fname(gfname),
 
-    /* 
+    /*
        PARAMETER: [use_validation_stop]
 
        Uses a heldout set of links and non-links to assess convergence.

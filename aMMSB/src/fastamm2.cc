@@ -124,7 +124,7 @@ FastAMM2::FastAMM2(Env &env, Network &network)
     Env::plog("stratified random node, load heldout from file:", true);
     load_heldout();
   }
-    
+
   info("+ done heldout\n");
 
   if (_env.adamic_adar) {
@@ -273,16 +273,16 @@ FastAMM2::load_heldout()
   FILE *f = fopen(_env.load_heldout_fname.c_str(), "r");
   while (!feof(f)) {
     if (fscanf(f, "%d\t%d\n", &a, &b) < 0) {
-      fprintf(stderr, "error: cannot read heldout file %s\n", 
+      fprintf(stderr, "error: cannot read heldout file %s\n",
 	      _env.load_heldout_fname.c_str());
       exit(-1);
     }
-    
+
     IDMap::const_iterator i1 = id2seq.find(a);
     IDMap::const_iterator i2 = id2seq.find(b);
-    
+
     if ((i1 == id2seq.end()) || (i2 == id2seq.end())) {
-      fprintf(stderr, "error: id %d or id %d not found in original network\n", 
+      fprintf(stderr, "error: id %d or id %d not found in original network\n",
 	      a, b);
       exit(-1);
     }
@@ -350,7 +350,7 @@ FastAMM2::edgelist_s(EdgeList &elist)
     IDMap::const_iterator a = m.find(p.first);
     IDMap::const_iterator b = m.find(p.second);
     if (a != m.end() && b!= m.end())
-      sa << a->second << "\t" << b->second << "\n";      
+      sa << a->second << "\t" << b->second << "\n";
   }
   return sa.str();
 }
@@ -546,11 +546,11 @@ FastAMM2::infer()
     if (_env.max_iterations && _iter > _env.max_iterations) {
       printf("+ Quitting: reached max iterations.\n");
       Env::plog("maxiterations reached", true);
-      
+
       info("saving model...\n");
       save_model();
       info("done saving model!\n");
-      
+
 #ifdef COMPUTE_GROUPS
       info("computing groups...\n");
       estimate_all_pi();
@@ -558,7 +558,7 @@ FastAMM2::infer()
       info("done computing groups!\n");
 #endif
       _env.terminate = false;
-      
+
       exit(0);
     }
 
@@ -578,19 +578,19 @@ FastAMM2::infer()
       opt_process(nodes, counts);
     else // non-informative sets
       opt_process_noninf(nodes, counts);
-    
+
 #ifdef PERF
     gettimeofday(&tv4, NULL);
     timeval_subtract(&r, &tv4, &tv3);
     timeval_add(&s, &r);
 #endif
 
-    //double scale = type == 0 ? 
+    //double scale = type == 0 ?
     //(double)_n / 2 : ((double)_n * (double)_n) / (2 * _inf_epsilon * _k);
-    
+
     double scale = (type == 0) ?
       (double)_n / (2 * (1 - _inf_epsilon)) : ((double)_n * (double)_m) / (2 * _inf_epsilon);
-    
+
     //printf("scale = %f\n", scale);
 
     double **gd = _gamma.data();
@@ -604,7 +604,7 @@ FastAMM2::infer()
     info("nodes size = %ld\n", nodes.size());
     for (uint32_t i = 0; i < _n; ++i) {
       _noderhot[i] = pow(_nodetau0 + _nodec[i], -1 * _nodekappa);
-      
+
       const BoolMap::iterator itr = nodes.find(i);
       bool val = itr->second;
       if (val) {
@@ -618,11 +618,11 @@ FastAMM2::infer()
 	  gd[i][k] = (1 - _noderhot[i]) * gd[i][k] +		\
 	    _noderhot[i] * _alpha[k];
       }
-      
+
       _nodec[i]++;
       _iter_map[i]++;
     }
-    
+
     if (!_env.nolambda)  {
       _rhot = pow(_tau0 + (_iter - _lambda_start_iter + 1), -1 * _kappa);
 
@@ -658,7 +658,7 @@ FastAMM2::infer()
       double n_mean = _neighbors.mean();
       double n_stdev = _neighbors.stdev(n_mean);
       info("neighbor size = (mean:%.5f, stdev:%.5f)", n_mean, n_stdev);
-      fprintf(_cmapf,"%d\t%d\t%.5f\t%.5f\n", 
+      fprintf(_cmapf,"%d\t%d\t%.5f\t%.5f\n",
 	      _iter, duration(), n_mean, n_stdev);
       fflush(_cmapf);
 
@@ -869,9 +869,9 @@ FastAMM2::compute_and_log_groups()
 	fprintf(g, "%s\t%d\n", fm->first.c_str(), fm->second);
       fclose(g);
     }
-    
+
   }
-  
+
   map<uint32_t, uint32_t> agg;
   for (std::map<uint32_t, uint32_t>::const_iterator i = _mcount.begin();
        i != _mcount.end(); ++i) {
@@ -1072,7 +1072,7 @@ FastAMM2::opt_process(NodeMap &nodes,
 }
 
 void
-FastAMM2::opt_process_noninf(NodeMap &nodes, 
+FastAMM2::opt_process_noninf(NodeMap &nodes,
 			     FreqMap &counts)
 {
   _start_node = gsl_rng_uniform_int(_r, _n);
@@ -1085,12 +1085,12 @@ FastAMM2::opt_process_noninf(NodeMap &nodes,
 
   const vector<uint32_t> *zeros = NULL; // _network.sparse_zeros(_start_node);
   NodeMap inf_map;
-    
+
   if (zeros) {
     for (uint32_t i = 0; i < zeros->size(); ++i)
       inf_map[(*zeros)[i]] = true;
   }
-    
+
   vector<Edge> sample;
 
   // find a sequence of (n - i) / m nodes that are not informative
@@ -1110,7 +1110,7 @@ FastAMM2::opt_process_noninf(NodeMap &nodes,
       q = (q + 1) % _n;
       continue;
     }
-    
+
     yval_t y = get_y(_start_node, node);
     Edge e(_start_node, node);
     Network::order_edge(_env, e);
@@ -1210,7 +1210,7 @@ FastAMM2::approx_log_likelihood()
       yval_t y = get_y(p,q);
 
       _pcomp.reset(p,q,y);
-      _pcomp.update_phis_until_conv(); 
+      _pcomp.update_phis_until_conv();
       const Array &phi1 = _pcomp.phi1();
       const Array &phi2 = _pcomp.phi2();
 
@@ -1270,7 +1270,8 @@ FastAMM2::approx_log_likelihood()
   fprintf(_lf, "%d\t%d\t%.5f\n", _iter, duration(), s);
   fflush(_lf);
 
-  double thresh = 0.00001;
+  // double thresh = 0.00001;
+  double thresh = 0.001;
   double w = s;
   if (_env.accuracy && (_iter > _n || _iter > 5000)) {
     if (w > _prev_w && _prev_w != 0 && fabs((w - _prev_w) / _prev_w) < thresh) {
@@ -1825,11 +1826,11 @@ FastAMM2::group_stats(const uArray &nodes, uint32_t M)
   for (uint32_t i = 0; i < M; ++i) {
     char buf1[512];
     sprintf(buf1, "/groupstats-%d.gml", nodes[i]);
-    
+
     const IDMap &m = _network.id2seq();
     const IDMap::const_iterator idt = m.find(nodes[i]);
     uint32_t a = idt->second;
-    
+
     FreqStrMap fmap;
     const vector<uint32_t> *v = _network.get_edges(a);
     if (v)  {
@@ -1846,7 +1847,7 @@ FastAMM2::group_stats(const uArray &nodes, uint32_t M)
 }
 
 void
-FastAMM2::ego(const uArray &nodes, 
+FastAMM2::ego(const uArray &nodes,
 	     uint32_t M)
 {
   uint32_t ROOT_TOP_K = 10; // 4 for arXiv, 10 for patents?
@@ -1859,17 +1860,17 @@ FastAMM2::ego(const uArray &nodes,
     const IDMap &m = _network.id2seq();
     const IDMap::const_iterator idt = m.find(nodes[i]);
     assert (idt != m.end());
-    
+
     FILE *f = fopen(Env::file_str(buf).c_str(), "w");
     fprintf(f, "graph\n[\n\tdirected 0\n");
     _ego_smap.clear();
     _comm_subgraph.clear();
 
     explore(f, true, 0, idt->second, uniq, tc, ROOT_TOP_K, 0);
-    
+
     MapVec _comm_groups;
     // we have a subgraph consisting of ROOT_TOP_K communities
-    for (MapVec::const_iterator itr = _comm_subgraph.begin(); 
+    for (MapVec::const_iterator itr = _comm_subgraph.begin();
 	 itr != _comm_subgraph.end(); ++itr) {
       Array pi_a(_k);
       Array pi_b(_k);
@@ -1878,18 +1879,18 @@ FastAMM2::ego(const uArray &nodes,
       // consider edges between all nodes
       // XXX add the ROOT itself
       printf("considering edges between %ld nodes\n", l.size());
-      for (uint32_t ni = 0; ni < l.size(); ++ni) 
+      for (uint32_t ni = 0; ni < l.size(); ++ni)
 	for (uint32_t nj = 0; nj < l.size(); ++nj) {
-	  
+
 	  if (get_y(l[ni],l[nj]) == 0)
 	    continue;
-	  
+
 	  Edge e(l[ni],l[nj]);
 	  Network::order_edge(_env, e);
 	  SampleMap::const_iterator ei = _ego_smap.find(e);
 	  if (ei != _ego_smap.end() && ei->second)
 	    continue; // already seen this edge
-	  
+
 	  Array beta(_k);
 	  estimate_beta(beta);
 	  get_Epi(l[ni], pi_a);
@@ -1897,10 +1898,10 @@ FastAMM2::ego(const uArray &nodes,
 
 	  //_Epi.slice(0, l[ni], pi_a);
 	  //_Epi.slice(0, l[nj], pi_b);
-    
+
 	  uint32_t max_k = 65535;
 	  double max = inner_prod_max(pi_a, pi_b, beta, max_k);
-	  
+
 	  if (max_k == comm) {
 	    write_edge_gml(f, l[ni], l[nj], max_k, max); // XXX
 	    _ego_smap[e] = true;
@@ -1925,13 +1926,13 @@ FastAMM2::ego(const uArray &nodes,
 }
 
 void
-FastAMM2::explore(FILE *f, bool root, uint32_t parent, 
-		 uint32_t a, NodeMap &uniq, BoolMap &tc, 
+FastAMM2::explore(FILE *f, bool root, uint32_t parent,
+		 uint32_t a, NodeMap &uniq, BoolMap &tc,
 		 uint32_t top_k, uint32_t depth)
 {
   if (uniq[a])
     return;
-  
+
   uint32_t max_k = 65535;
   if (!root) {
     Array pi_a(_k);
@@ -1942,16 +1943,16 @@ FastAMM2::explore(FILE *f, bool root, uint32_t parent,
     SampleMap::const_iterator i = _ego_smap.find(e);
     if (i != _ego_smap.end() && i->second)
       return; // already seen this edge
-    
+
     Array beta(_k);
     estimate_beta(beta);
-    
+
     get_Epi(parent, pi_a);
     get_Epi(a, pi_b);
 
     //_Epi.slice(0, parent, pi_a);
     //_Epi.slice(0, a, pi_b);
-    
+
     double max = inner_prod_max(pi_a, pi_b, beta, max_k);
 
     if (tc[max_k]) { // in top_k communities
@@ -1970,14 +1971,14 @@ FastAMM2::explore(FILE *f, bool root, uint32_t parent,
   // get the top communities of a
   vector<uint32_t> u;
   get_top_p_communities(a, top_k, u);
-  
+
   BoolMap tc_child; // top communities
   if (root) {
     for (uint32_t j = 0; j < u.size(); ++j) {
       printf("setting comm %d for node %d\n", u[j], a);
       tc_child[u[j]] = true;
     }
-  } else 
+  } else
     tc_child[max_k] = true;
 
   static uint32_t MAX_DEPTH = 2;
@@ -1999,11 +2000,11 @@ FastAMM2::explore(FILE *f, bool root, uint32_t parent,
 }
 
 void
-FastAMM2::write_edge_gml(FILE *f, uint32_t a, 
+FastAMM2::write_edge_gml(FILE *f, uint32_t a,
 			uint32_t b, uint32_t color, double weight)
 {
   fprintf(f, "\tedge\n\t[\n");
-  fprintf(f, "\t\tsource %d\n", a); 
+  fprintf(f, "\t\tsource %d\n", a);
   fprintf(f, "\t\ttarget %d\n", b);
   fprintf(f, "\t\tcolor %d\n", color);
   fprintf(f, "\t\tweight %.5f\n", weight);
@@ -2049,7 +2050,7 @@ FastAMM2::most_likely_group(uint32_t p)
   Array Epi(_k);
   get_Epi(p, Epi);
   double max_k = .0, max_p = .0;
-  
+
   for (uint32_t k = 0; k < _k; ++k)
     if (Epi[k] > max_p) {
       max_p = Epi[k];
