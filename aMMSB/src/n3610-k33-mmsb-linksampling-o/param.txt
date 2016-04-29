@@ -1,0 +1,86 @@
+nodes: 3610
+groups: 33
+t: 2
+minibatch (rpair or stratified rpair options only): 1805
+mbsize: 1
+alpha: 0.030303030
+sbm_alpha: 0.030303030
+heldout_ratio: 0.010000000
+precision_ratio: 0.001000000
+stratified: False
+delaylearn: False
+nolambda: False
+randomnode: False
+gen: False
+undirected: True
+gap: False
+nthreads: 0
+stopthresh: 0.000010000
+infthresh: 0.000000000
+randzeros: False
+benchmark: False
+max iterations: 0
+seed: 0.000000000
+use validation stop: True
+gamma location: 
+link_thresh: 0.500000000
+lt_min_deg: 0
+epsilon: 0.000000000
+sets_mini_batch: 36
+use_init_communities: False
+load_test_sets: False
+val_load: False
+val_file_location: 
+test_load: False
+test_file_location: 
+reportfreq: 1
+eta_type: uniform
+total pairs: 6514245
+ones_prob: 0.024339428
+zeros_prob: 0.975660572
+inference n: 3610
+total pairs: 6514245.000000000
+ones_prob: 0.024339428
+zeros_prob: 0.975660572
+avg degree: 87.840997230
+max degree: 2552
+eta: 
+[ 1 1 
+  1 1 
+  1 1 
+  1 1 
+  1 1 
+  1 1 
+  1 1 
+  1 1 
+  1 1 
+  1 1 
+  1 1 
+  1 1 
+  1 1 
+  1 1 
+  1 1 
+  1 1 
+  1 1 
+  1 1 
+  1 1 
+  1 1 
+  1 1 
+  1 1 
+  1 1 
+  1 1 
+  1 1 
+  1 1 
+  1 1 
+  1 1 
+  1 1 
+  1 1 
+  1 1 
+  1 1 
+  1 1 
+]
+load validation from file:: False
+heldout ratio: 0.010000000
+validation pairs (1s and 0s): 1584
+network ones: 158553
+network singles: 0

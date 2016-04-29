@@ -177,6 +177,13 @@ LinkSampling::set_dir_exp(const Matrix &u, Matrix &exp)
     double s = .0;
     for (uint32_t j = 0; j < u.n(); ++j)
       s += d[i][j];
+    
+    // Edits
+    if (s == .0){
+        s = 0.00001;
+        printf("s = %f\n", s);
+    }
+    // Edits
     //debug("set_dir_exp: s = %f\n",s);
 
     // Edits starts here
@@ -189,7 +196,8 @@ LinkSampling::set_dir_exp(const Matrix &u, Matrix &exp)
     double psi_sum = gsl_sf_psi(s);
     for (uint32_t j = 0; j < u.n(); ++j) {
       //debug("set_dir_exp: d[i][j] = %f\n",d[i][j]);
-      e[i][j] = gsl_sf_psi(d[i][j]) - psi_sum;
+    if (d[i][j] != 0)
+	 e[i][j] = gsl_sf_psi(d[i][j]) - psi_sum;
     }
   }
 }
