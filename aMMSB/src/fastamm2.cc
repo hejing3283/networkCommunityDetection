@@ -607,6 +607,7 @@ FastAMM2::infer()
 
       const BoolMap::iterator itr = nodes.find(i);
       bool val = itr->second;
+      // Serena: gamma update
       if (val) {
 	for (uint32_t k = 0; k < _k; ++k)
 	  gd[i][k] = (1 - _noderhot[i]) * gd[i][k] +		\
@@ -630,7 +631,7 @@ FastAMM2::infer()
       double **ed = _eta.data();
       double **ld = _lambda.data();
 
-      // lambda update step for gradient
+      // Serena: lambda update step for gradient
       for (uint32_t k = 0; k < _k; ++k)
 	for (uint32_t t = 0; t < _t; ++t) {
 	  ldt[k][t] = ed[k][t] + scale  * ldt[k][t];
