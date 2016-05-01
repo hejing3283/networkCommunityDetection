@@ -59,16 +59,17 @@ void corpus::read_data(const char * data_filename,
     nd = 0;
     nw = 0;
 
+    // sky -> builds up vocabulary
     while ((fscanf(fileptr, "%10d", &length) != EOF))
     {
         document * doc = new document(length);
         for (n = 0; n < length; n++)
         {
-            fscanf(fileptr, "%10d:%10d", &word, &count);
+            fscanf(fileptr, "%10d:%10d", &word, &count); // only integerss
             word = word - OFFSET;
             doc->words[n] = word;
             doc->counts[n] = count;
-            doc->total += count;
+            doc->total += count; // # words in doc n
             if (word >= nw)
             {
                 nw = word + 1;

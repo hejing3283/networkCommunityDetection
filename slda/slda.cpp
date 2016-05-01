@@ -208,7 +208,7 @@ void slda::save_model_text(const char * filename)
 }
 
 /*
- * create the data structure for sufficient statistic 
+ * create the data structure for sufficient statistic
  */
 
 suffstats * slda::new_suffstats(int num_docs)
@@ -265,7 +265,7 @@ void slda::zero_initialize_ss(suffstats * ss)
 
 
 /*
- * initialize the sufficient statistics with random numbers 
+ * initialize the sufficient statistics with random numbers
  */
 
 void slda::random_initialize_ss(suffstats * ss, corpus* c)
@@ -384,13 +384,13 @@ void slda::corpus_initialize_ss(suffstats* ss, corpus* c)
 
 void slda::load_model_initialize_ss(suffstats* ss, corpus * c)
 {
-    int num_docs = ss->num_docs;                                                                         
-    for (int d = 0; d < num_docs; d ++)       
-    {                                                                                                    
+    int num_docs = ss->num_docs;
+    for (int d = 0; d < num_docs; d ++)
+    {
        document * doc = c->docs[d];
        ss->labels[d] = doc->label;
        ss->tot_labels[doc->label] ++;
-    }     
+    }
 }
 
 void slda::free_suffstats(suffstats * ss)
@@ -420,7 +420,7 @@ void slda::v_em(corpus * c, const settings * setting,
 {
     char filename[100];
     int max_length = c->max_corpus_length();
-    double **var_gamma, **phi, **lambda;
+    double **var_gamma, **phi, **lambda; // pointers to arrays
     double likelihood, likelihood_old = 0, converged = 1;
     int d, n, i;
     double L2penalty = setting->PENALTY;
@@ -438,7 +438,7 @@ void slda::v_em(corpus * c, const settings * setting,
     if (strcmp(start, "seeded") == 0)
     {
         corpus_initialize_ss(ss, c);
-        mle(ss, 0, setting);
+        mle(ss, 0, setting); // sky -> why mle first?
     }
     else if (strcmp(start, "random") == 0)
     {
@@ -461,12 +461,12 @@ void slda::v_em(corpus * c, const settings * setting,
     while (((converged < 0) || (converged > setting->EM_CONVERGED) || (i <= LDA_INIT_MAX+2)) && (i <= setting->EM_MAX_ITER))
     {
         printf("**** em iteration %d ****\n", ++i);
-        likelihood = 0;
+        likelihood = 0; // sky <- overall document likelihood
         zero_initialize_ss(ss);
         if (i > LDA_INIT_MAX) ETA_UPDATE = 1;
         // e-step
         printf("**** e-step ****\n");
-        for (d = 0; d < c->num_docs; d++)
+        for (d = 0; d < c->num_docs; d++) // sky <- sum of per document likelihood
         {
             if ((d % 100) == 0) printf("document %d\n", d);
             likelihood += doc_e_step(c->docs[d], var_gamma[d], phi, ss, ETA_UPDATE, setting);
@@ -537,14 +537,14 @@ void slda::mle(suffstats * ss, int eta_update, const settings * setting)
         for (w = 0; w < size_vocab; w++)
         {
             if (ss->word_ss[k][w] > 0)
-                log_prob_w[k][w] = log(ss->word_ss[k][w]) - log(ss->word_total_ss[k]);
-            else
+                log_prob_w[k][w] = log(ss->word_ss[k][w]) - log(ss->word_total_ss[k]); // sky <- log(p(w_n))?
+            else                                                                       // finding the number of similar word_ss
                 log_prob_w[k][w] = -100.0;
         }
     }
-    if (eta_update == 0) return;
+    if (eta_update == 0) return; // sky <- stops here for first time
 
-    //the label part goes here
+    //the label part goes here // sky <- coordinate ascent
     printf("maximizing ...\n");
 	double f = 0.0;
 	int status;
@@ -573,7 +573,7 @@ void slda::mle(suffstats * ss, int eta_update, const settings * setting)
 	{
 		for (k = 0; k < num_topics; k ++)
 		{
-			gsl_vector_set(x, l*num_topics + k, eta[l][k]);
+			gsl_vector_set(x, l*num_topics + k, eta[l][k]); // <- eta appears here
 		}
 	}
 
@@ -634,12 +634,12 @@ double slda::doc_e_step(document* doc, double* gamma, double** phi,
 
             //statistics for each document of the supervised part
             ss->z_bar[d].z_bar_m[k] += doc->counts[n] * phi[n][k]; //mean
-            for (i = k; i < num_topics; i ++) //variance
+            for (i = k; i < num_topics; i ++) //variance // sky <- first part of equation 29
             {
                 idx = map_idx(k, i, num_topics);
                 if (i == k)
                     ss->z_bar[d].z_bar_var[idx] +=
-                        doc->counts[n] * doc->counts[n] * phi[n][k]; 
+                        doc->counts[n] * doc->counts[n] * phi[n][k]; // sky <- where does doc->counts[n] come in?
 
                 ss->z_bar[d].z_bar_var[idx] -=
                     doc->counts[n] * doc->counts[n] * phi[n][k] * phi[n][i];
@@ -648,11 +648,11 @@ double slda::doc_e_step(document* doc, double* gamma, double** phi,
     }
     for (k = 0; k < num_topics; k++)
     {
-        ss->z_bar[d].z_bar_m[k] /= (double)(doc->total);
+        ss->z_bar[d].z_bar_m[k] /= (double)(doc->total); // sky <- equation 12
     }
     for (i = 0; i < num_topics*(num_topics+1)/2; i ++)
     {
-        ss->z_bar[d].z_bar_var[i] /= (double)(doc->total * doc->total);
+        ss->z_bar[d].z_bar_var[i] /= (double)(doc->total * doc->total); // sky <- normalise equation 29
     }
 
     ss->num_docs = ss->num_docs + 1; //because we need it for store statistics for each docs
@@ -668,12 +668,12 @@ double slda::lda_inference(document* doc, double* var_gamma, double** phi, const
     double *oldphi = new double [num_topics];
     double *digamma_gam = new double [num_topics];
 
-    // compute posterior dirichlet
+    // compute posterior dirichlet // sky -> equation 15?
     for (k = 0; k < num_topics; k++)
     {
-        var_gamma[k] = alpha + (doc->total/((double) num_topics));
-        digamma_gam[k] = digamma(var_gamma[k]);
-        for (n = 0; n < doc->length; n++)
+        var_gamma[k] = alpha + (doc->total/((double) num_topics)); // sky -> pretty sure equation 13
+        digamma_gam[k] = digamma(var_gamma[k]); // sky -> first term of equation 10
+        for (n = 0; n < doc->length; n++) // sky -> update phi on the side
             phi[n][k] = 1.0/num_topics;
     }
     var_iter = 0;
@@ -687,7 +687,7 @@ double slda::lda_inference(document* doc, double* var_gamma, double** phi, const
             for (k = 0; k < num_topics; k++)
             {
                 oldphi[k] = phi[n][k];
-                phi[n][k] = digamma_gam[k] + log_prob_w[k][doc->words[n]];
+                phi[n][k] = digamma_gam[k] + log_prob_w[k][doc->words[n]]; // sky -> first two terms of equation 22?
 
                 if (k > 0)
                     phisum = log_sum(phisum, phi[n][k]);
@@ -723,24 +723,24 @@ double slda::lda_compute_likelihood(document* doc, double** phi, double* var_gam
     double alpha_sum = num_topics * alpha;
     for (k = 0; k < num_topics; k++)
     {
-        dig[k] = digamma(var_gamma[k]);
+        dig[k] = digamma(var_gamma[k]); // sky -> first term of equation 10
         var_gamma_sum += var_gamma[k];
     }
-    digsum = digamma(var_gamma_sum);
+    digsum = digamma(var_gamma_sum); // sky -> second term of equation
 
-    likelihood = lgamma(alpha_sum) - lgamma(var_gamma_sum);
+    likelihood = lgamma(alpha_sum) - lgamma(var_gamma_sum); // sky -> first term of equation 6 and 2nd term of equation 9
 
     for (k = 0; k < num_topics; k++)
     {
-        likelihood += - lgamma(alpha) + (alpha - 1)*(dig[k] - digsum) +
-                      lgamma(var_gamma[k]) - (var_gamma[k] - 1)*(dig[k] - digsum);
+        likelihood += - lgamma(alpha) + (alpha - 1)*(dig[k] - digsum) + // sky -> 2nd and 3rd terms of equqation 6
+                      lgamma(var_gamma[k]) - (var_gamma[k] - 1)*(dig[k] - digsum); // sky -> 3rd and 4th terms of equation 9
 
         for (n = 0; n < doc->length; n++)
         {
             if (phi[n][k] > 0)
             {
-                likelihood += doc->counts[n]*(phi[n][k]*((dig[k] - digsum) -
-                                              log(phi[n][k]) + log_prob_w[k][doc->words[n]]));
+                likelihood += doc->counts[n]*(phi[n][k]*((dig[k] - digsum) - // sky -> equation 7, why counts?
+                                              log(phi[n][k]) + log_prob_w[k][doc->words[n]])); // sky <- first term of equation 9 and equation 8
             }
         }
     }
@@ -775,28 +775,28 @@ double slda::slda_compute_likelihood(document* doc, double** phi, double* var_ga
             {
                 likelihood += doc->counts[n]*(phi[n][k]*((dig[k] - digsum) - log(phi[n][k]) + log_prob_w[k][doc->words[n]]));
                 if (doc->label < num_classes-1)
-                    t += eta[doc->label][k] * doc->counts[n] * phi[n][k];
+                    t += eta[doc->label][k] * doc->counts[n] * phi[n][k]; // sky <- accumulate 2nd term of equation 11
             }
         }
     }
-    likelihood += t / (double)(doc->total); 	//eta_k*\bar{\phi}
+    likelihood += t / (double)(doc->total); 	//eta_k*\bar{\phi} // sky <- 2nd term of equation 11
 
     t = 1.0; //the class model->num_classes-1
     for (l = 0; l < num_classes-1; l ++)
     {
-        t1 = 1.0; 
+        t1 = 1.0;
         for (n = 0; n < doc->length; n ++)
         {
             t2 = 0.0;
             for (k = 0; k < num_topics; k ++)
             {
-                t2 += phi[n][k] * exp(eta[l][k] * doc->counts[n]/(double)(doc->total));
+                t2 += phi[n][k] * exp(eta[l][k] * doc->counts[n]/(double)(doc->total)); // sky <- probably last term of equation
             }
-            t1 *= t2; 
+            t1 *= t2;
         }
-        t += t1; 
+        t += t1;
     }
-    likelihood -= log(t); 
+    likelihood -= log(t);
     delete [] dig;
     //printf("%lf\n", likelihood);
     return likelihood;
@@ -858,7 +858,7 @@ double slda::slda_inference(document* doc, double* var_gamma, double** phi, cons
 
                 for (k = 0; k < num_topics; k ++)
                 {
-                    //h in the paper
+                    //h in the paper // sky <- equation 26
                     sf_params[k] += sf_aux[l]*exp(eta[l][k] * doc->counts[n]/(double)(doc->total));
                 }
             }
