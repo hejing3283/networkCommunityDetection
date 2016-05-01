@@ -630,6 +630,7 @@ FastAMM2::infer()
       double **ed = _eta.data();
       double **ld = _lambda.data();
 
+      // lambda update step for gradient
       for (uint32_t k = 0; k < _k; ++k)
 	for (uint32_t t = 0; t < _t; ++t) {
 	  ldt[k][t] = ed[k][t] + scale  * ldt[k][t];
@@ -672,10 +673,10 @@ FastAMM2::infer()
       info("validation end\n");
       fflush(stdout);
 
-      info("precision begin\n");
+      // info("precision begin\n");
       //uint32_t c10, c100, c1000;
       //compute_precision(c10, c100, c1000);
-      info("precision end\n");
+      // info("precision end\n");
 
       if (_env.terminate) {
 	info("saving model...\n");
