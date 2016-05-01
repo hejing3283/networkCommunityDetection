@@ -1,8 +1,5 @@
 #include "env.hh"
 #include "mmsbinfer.hh"
-#include "linksampling.hh"
-#include "fastamm.hh"
-#include "fastinit.hh"
 #include "fastamm2.hh"
 #include "sbm.hh"
 #include "mmsbinferorig.hh"
@@ -162,21 +159,21 @@ main(int argc, char **argv)
 
   env_global = &env;
   Network network(env);
-  if (!run_gap && gen) {
-    if (orig) {
-      info("+ generating mmsb network (with full blockmodel)\n");
-      double alpha = (double)1.0 / env.k;
-      MMSBOrig mmsborig(env, network);
-      mmsborig.gen(alpha);
-      exit(0);
-    } else {
-      info("+ generating mmsb network\n");
-      double alpha = 0.05; //(double)1.0 / env.k;
-      MMSBGen mmsbgen(env, network, false);
-      mmsbgen.gen(alpha);
-      exit(0);
-    }
-  }
+  // if (!run_gap && gen) {
+  //   if (orig) {
+  //     info("+ generating mmsb network (with full blockmodel)\n");
+  //     double alpha = (double)1.0 / env.k;
+  //     MMSBOrig mmsborig(env, network);
+  //     mmsborig.gen(alpha);
+  //     exit(0);
+  //   } else {
+  //     info("+ generating mmsb network\n");
+  //     double alpha = 0.05; //(double)1.0 / env.k;
+  //     MMSBGen mmsbgen(env, network, false);
+  //     mmsbgen.gen(alpha);
+  //     exit(0);
+  //   }
+  // }
   if (network.read(datfname.c_str()) < 0) {
     fprintf(stderr, "error reading %s; quitting\n", datfname.c_str());
     return -1;
