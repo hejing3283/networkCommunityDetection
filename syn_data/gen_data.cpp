@@ -22,7 +22,7 @@ int main()
     const double alpha = double (1.0) / k;
     // printf ("k = %d and alpha = %f\n", k, alpha);
 
-    double eta = 1; // eta is the hidden variable of the Beta distribution
+    double eta = 1; // eta is the hpyerparameter of the Beta istribution
     double comm_str [k];
     for (uint32_t i = 0; i < k; ++i)
         comm_str[i] = gsl_ran_beta(r, eta, eta);
@@ -43,7 +43,7 @@ int main()
     for (uint32_t i = 0; i < n; ++i)
         gsl_ran_dirichlet(r, k, alpha_array, pi[i]);
 
-    // Convert to binary
+    // Convert to binary; TODO: using sampling
     for (uint32_t i = 0; i < n; ++i){
         for (uint32_t j = 0; j < k ; ++j){
             if (pi[i][j] > 0.5){
