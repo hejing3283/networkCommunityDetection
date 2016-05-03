@@ -43,6 +43,8 @@ public:
   yval_t y(uint32_t i, uint32_t j) const;
 
   // Edits
+  int read_norm_attr(string s);
+  int read_bin_attr(string s);
   // Create functions to access matrices
   normMatrix get_nMatrix() { return nMatrix; }
   binMatrix get_bMatrix() { return bMatrix; }
@@ -121,12 +123,8 @@ private:
   double _avg_deg;
 
   // Edits
-<<<<<<< HEAD
   // Create private variables
   normMatrix nMatrix;
-=======
-  // normMatrix nMatrix;
->>>>>>> 2d058a18281a4ab55e852bc720009ccaf3df97dd
   binMatrix bMatrix;
   // Edits
 
