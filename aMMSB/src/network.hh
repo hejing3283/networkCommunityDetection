@@ -26,8 +26,9 @@ public:
     _sparse_zeros(env.n),
     _env(env),
     _curr_seq(0), _ones(0), _single_nodes(0),
-    // nMatrix(env.n),
-    bMatrix(env.n),
+    // Create matrices
+    nMatrix(env.n, env.norm),
+    bMatrix(env.n, env.bin),
     _deg(env.n),_avg_deg(.0) { }
   ~Network() { }
 
@@ -42,9 +43,9 @@ public:
   yval_t y(uint32_t i, uint32_t j) const;
 
   // Edits
-  // Create matrices to store attributes
-  // normMatrix nMatrix(int i, int j) { return nMatrix[i][j]; }
-  binMatrix bMatrix() { return bMatrix; }
+  // Create functions to access matrices
+  normMatrix get_nMatrix() { return nMatrix; }
+  binMatrix get_bMatrix() { return bMatrix; }
   // Edits
 
   const EdgeList &edges() const { return _edges; }
@@ -120,8 +121,9 @@ private:
   double _avg_deg;
 
   // Edits
-  // normMatrix nMatrix;
-  // binMatrix bMatrix;
+  // Create private variables
+  normMatrix nMatrix;
+  binMatrix bMatrix;
   // Edits
 
   // ground truth

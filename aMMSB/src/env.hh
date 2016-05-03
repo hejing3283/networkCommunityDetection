@@ -51,7 +51,7 @@ typedef D1Array<IDMap> KMap;
 
 // Edits
 typedef D2Array<double> normMatrix;
-typedef D1Array<bool> binMatrix;
+typedef D2Array<bool> binMatrix;
 // Edits
 
 class Env {
