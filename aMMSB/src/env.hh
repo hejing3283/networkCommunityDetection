@@ -49,6 +49,11 @@ typedef std::map<Edge, double> ValueMap;
 typedef std::map<uint32_t, string> StrMapInv;
 typedef D1Array<IDMap> KMap;
 
+// Edits
+typedef D2Array<double> normMatrix;
+typedef D1Array<bool> binMatrix;
+// Edits
+
 class Env {
 public:
   Env(uint32_t N, uint32_t K, bool massive,
@@ -84,6 +89,11 @@ public:
   uint32_t s;
   uint32_t m;
   uint32_t sets_mini_batch;
+
+  // Edit
+  uint32_t norm;
+  uint32_t bin;
+  // Edit
 
   bool informative_sampling;
   bool single;

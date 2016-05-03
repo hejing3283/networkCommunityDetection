@@ -17,7 +17,7 @@
 
 using namespace std;
 
-#define SPARSE_NETWORK 1 
+#define SPARSE_NETWORK 1
 
 class Network {
 public:
@@ -26,6 +26,8 @@ public:
     _sparse_zeros(env.n),
     _env(env),
     _curr_seq(0), _ones(0), _single_nodes(0),
+    // nMatrix(env.n),
+    bMatrix(env.n),
     _deg(env.n),_avg_deg(.0) { }
   ~Network() { }
 
@@ -39,9 +41,17 @@ public:
   uint32_t n() const;
   yval_t y(uint32_t i, uint32_t j) const;
 
+  // Edits
+  // Create matrices to store attributes
+  // normMatrix nMatrix(int i, int j) { return nMatrix[i][j]; }
+  binMatrix bMatrix() { return bMatrix; }
+  // Edits
+
   const EdgeList &edges() const { return _edges; }
   EdgeList &edgelist() { return _edges; }
-  
+
+  // # unique edges ~ total number of words, assume as total # words.
+  // total # words is uneeded
   uint32_t nlinks() const { return _edges.size(); }
 
   const Array &deg() const { assert(_env.undirected); return _deg; }
@@ -57,7 +67,7 @@ public:
 
   const MapVec &init_community_to_nodes() const { return _init_community_to_nodes; }
   const MapVec &init_community_to_nodes_seq() const { return _init_community_to_nodes_seq; }
-  
+
   uint32_t ones() const { return _ones; }
   uint32_t singles() const { return _single_nodes; }
   bool is_single(uint32_t p) const;
@@ -109,6 +119,11 @@ private:
   Array _deg;
   double _avg_deg;
 
+  // Edits
+  // normMatrix nMatrix;
+  // binMatrix bMatrix;
+  // Edits
+
   // ground truth
   MapVec _gt_communities;
   MapVec _gt_communities_seq;
@@ -126,6 +141,7 @@ private:
 };
 
 inline uint32_t
+// # of nodes in graph
 Network::n() const
 {
   return _sparse_y.size();
@@ -161,7 +177,7 @@ Network::y(uint32_t a, uint32_t b) const
   Edge e(a,b);
   order_edge(_env, e);
   assert (e.first < _sparse_y.size());
-  
+
   const vector<uint32_t> *v = _sparse_y[e.first];
   if (!v) // singleton node
     return 0;
