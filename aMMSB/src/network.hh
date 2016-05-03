@@ -121,8 +121,12 @@ private:
   double _avg_deg;
 
   // Edits
+<<<<<<< HEAD
   // Create private variables
   normMatrix nMatrix;
+=======
+  // normMatrix nMatrix;
+>>>>>>> 2d058a18281a4ab55e852bc720009ccaf3df97dd
   binMatrix bMatrix;
   // Edits
 
