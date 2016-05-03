@@ -42,6 +42,7 @@ main(int argc, char **argv)
 
   signal(SIGTERM, term_handler);
 
+  // Define parameter
   bool run_gap = false;
   bool force_overwrite_dir = true;
   string datfname = "network.dat";
@@ -103,6 +104,7 @@ main(int argc, char **argv)
 
   bool load_heldout_sets = false;
 
+  // parsing command line arguments
   if (argc == 1) {
     usage();
     exit(-1);
@@ -215,6 +217,7 @@ main(int argc, char **argv)
     ++i;
   };
 
+  // initiate Env class.
   assert (!(batch && online));
 
   Env env(n, k, massive, single, batch, stratified,
@@ -238,7 +241,10 @@ main(int argc, char **argv)
 	  link_sampling, gml, findk);
 
   env_global = &env;
+  // initiate network class.
   Network network(env);
+
+  // do work
   if (!run_gap && gen) {
     if (orig) {
       info("+ generating mmsb network (with full blockmodel)\n");

@@ -21,6 +21,7 @@ typedef uint8_t yval_t;
 
 typedef D2Array<yval_t> AdjMatrix;
 typedef D2Array<double> Matrix;
+typedef D2Array<bool> BMatrix;
 typedef D3Array<double> D3;
 typedef D2Array<KV> MatrixKV;
 typedef D1Array<KV> KVArray;

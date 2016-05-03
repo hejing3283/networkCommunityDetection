@@ -21,14 +21,18 @@ using namespace std;
 
 class Network {
 public:
+  // constructor
   Network(Env &env):
     _sparse_y(env.n),
     _sparse_zeros(env.n),
     _env(env),
     _curr_seq(0), _ones(0), _single_nodes(0),
     _deg(env.n),_avg_deg(.0) { }
+
+  // destructor
   ~Network() { }
 
+  // accessor methods
   int read(string s);
   const SparseMatrix &sparse_y() const { return _sparse_y; }
   SparseMatrix &sparse_y() { return _sparse_y; }
@@ -62,9 +66,10 @@ public:
   uint32_t singles() const { return _single_nodes; }
   bool is_single(uint32_t p) const;
 
+  // mutator methods
   void set_avg_deg();
   bool relevant_node_ppc(uint32_t i) const;
-  void set_neighborhood_sets();
+  void set_neighborhood_sets(); // for sampling
   void load_neighborhood_sets();
 
   void load_ground_truth();
@@ -95,8 +100,8 @@ public:
 private:
   bool add(uint32_t id);
 
-  SparseMatrix _sparse_y;
-  SparseMatrix _sparse_zeros;
+  SparseMatrix _sparse_y; //D1 array for nodes
+  SparseMatrix _sparse_zeros; //
   EdgeList _edges;
   Env &_env;
   IDMap _id2seq;
@@ -108,6 +113,8 @@ private:
   uint32_t _single_nodes;
   Array _deg;
   double _avg_deg;
+
+  // for attributes
 
   // ground truth
   MapVec _gt_communities;
@@ -121,8 +128,8 @@ private:
   StrMapInv _gt_groups;
 
   // collaboration networks
-//   int _min_author_degree;
-//   vector<uint32_t> _core_authors;
+   int _min_author_degree;
+   vector<uint32_t> _core_authors;
 };
 
 inline uint32_t
