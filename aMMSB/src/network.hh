@@ -44,7 +44,7 @@ public:
   // Edits
   // Create matrices to store attributes
   // normMatrix nMatrix(int i, int j) { return nMatrix[i][j]; }
-  binMatrix bMatrix() { return bMatrix; }
+  // binMatrix bMatrix() { return bMatrix; }
   // Edits
 
   const EdgeList &edges() const { return _edges; }
@@ -121,7 +121,7 @@ private:
 
   // Edits
   // normMatrix nMatrix;
-  // binMatrix bMatrix;
+  binMatrix bMatrix;
   // Edits
 
   // ground truth
