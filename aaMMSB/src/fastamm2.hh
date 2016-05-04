@@ -24,14 +24,14 @@
 
 class PhiCompute {
 public:
-  PhiCompute(const Env &env, gsl_rng **r,
+  PhiCompute(const Env &env, /* Edits */Network &net, /* Edits */gsl_rng **r,
 	   const uint32_t &iter,
 	  uint32_t n, uint32_t k, uint32_t t,
 	  uint32_t p, uint32_t q, yval_t y,
 	  const Matrix &Elogpi,
 	  const Matrix &Elogbeta,
 	  Array &Elogf, bool phifix = false)
-    : _env(env), _r(r), _iter(iter),
+    : _env(env), /* Edits */_net(net), /* Edits */_r(r), _iter(iter),
       _n(n), _k(k), _t(t),
       _p(p), _q(q), _y(y),
       _Elogpi(Elogpi), _Elogbeta(Elogbeta),
@@ -64,6 +64,9 @@ public:
 
 private:
   const Env &_env;
+  // Edits
+  Network &_net;
+  // Edits
   gsl_rng **_r;
   const uint32_t &_iter;
 
@@ -114,7 +117,15 @@ PhiCompute::update_phis(bool is_phi1)
     if (_y == 1)
       u = (1 - b[k]) * _env.logepsilon;
     const double ** const elogpid = _Elogpi.const_data();
-    anext[k] = elogpid[c][k] + (_Elogf[k] * b[k]) + u;
+    // Edits
+    double v = .0;
+    double eta_k = _env.eta_gau[k];
+    for (uint32_t i = 0; i < _env.dgau; ++i) {
+      v += (_net.get_gau(c, i) * eta_k) / (_env.n * _env.delta_gau) 
+            - (eta_k * eta_k) / (2.0 * _env.n * _env.delta_gau);
+    }
+    anext[k] = elogpid[c][k] + (_Elogf[k] * b[k]) + u + v;
+    // Edits
   }
   anext.lognormalize();
 
@@ -331,7 +342,8 @@ private:
   // Additional private variables
   uint32_t _gau;
   uint32_t _bin;
-  double _eta_G;
+  std::vector<double> _eta_gau;
+  std::vector<double> _eta_bin;
   double _delta_G;
   // Additional private matrices
   gauMatrix _gMatrix;

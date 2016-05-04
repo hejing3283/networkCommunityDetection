@@ -11,7 +11,7 @@ FastAMM2::FastAMM2(Env &env, Network &network)
    _t(env.t), _s(env.s), _m(10),
    // Edits
    _gau(env.dgau), _bin(env.dbin),
-   _eta_G(env.eta_gau), _delta_G(env.delta_gau),
+   _eta_gau(env.eta_gau), _delta_G(env.delta_gau),
    _gMatrix(network.get_gauMatrix()), _bMatrix(network.get_binMatrix()),
    // Edits
    _alpha(_k),
@@ -39,7 +39,7 @@ FastAMM2::FastAMM2(Env &env, Network &network)
 #endif
    _lambdat(_k,_t), _count(_n),
    _Elogf(_k),
-   _pcomp(env, &_r, _iter, _n, _k, _t, 0, 0, 0,
+   _pcomp(env, network, &_r, _iter, _n, _k, _t, 0, 0, 0,
 	  _Elogpi, _Elogbeta, _Elogf),
    _shuffled_nodes(_n),
    _delaylearn_reported(false),

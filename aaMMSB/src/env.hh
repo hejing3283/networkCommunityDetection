@@ -154,8 +154,6 @@ public:
   double eta0_gen;
   double eta1_gen;
 
-
-
   // parameters for the case where no link
   int reportfreq;
   double epsilon;
