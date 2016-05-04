@@ -1,3 +1,8 @@
+/* Edit */
+// For diagonalizing vectors
+#include <eigen3/Eigen/Dense>
+
+/* Edit */
 #include "fastamm2.hh"
 #include "log.hh"
 #include <sys/time.h>
@@ -996,6 +1001,22 @@ FastAMM2::opt_process(NodeMap &nodes,
 
       const Array &phi1 = _pcomp.phi1();
       const Array &phi2 = _pcomp.phi2();
+
+      // Edits
+      // Calculate all phi_bars
+      for (uint32_t n = 0; n < _n, ++n){
+
+      }
+
+
+
+      for (uint32_t n = 0; n < _n, ++n){
+    	  for (unit32_t g = 0; g < _gau, ++g){
+
+    	  }
+      }
+
+      // Edits
 
       _gammat.add_slice(p, phi1);
       _gammat.add_slice(q, phi2);

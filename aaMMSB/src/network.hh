@@ -43,13 +43,13 @@ public:
   uint32_t n() const;
 
   //Edit
-  uint32_t dgau() const{
-	  return _env.dgau;
-  }
-
-  uint32_t dbin() const{
-	  return _env.dbin;
-  }
+//  uint32_t dgau() const{
+//	  return _env.dgau;
+//  }
+//
+//  uint32_t dbin() const{
+//	  return _env.dbin;
+//  }
   // Edit
 
   yval_t y(uint32_t i, uint32_t j) const;
