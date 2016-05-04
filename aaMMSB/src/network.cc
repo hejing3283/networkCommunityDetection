@@ -160,7 +160,7 @@ Network::read(string s)
 
 // Edits
 int
-Network::read_norm_attr(string s)
+Network::read_gau_attr(string s)
 {
   // Check if file is valid
   fprintf(stdout, "+ Reading attribute matrix from %s\n", s.c_str());
@@ -185,8 +185,7 @@ Network::read_norm_attr(string s)
       s2 = int(b2);
       s3 = double(b3);
       // Updates matrix
-      nMatrix = get_nMatrix();
-      nMatrix[s1][s2] = s3;
+      set_gau(s1, s2, s3);
     }
   }
   printf("Done reading Gaussian attributes.\n");
@@ -219,8 +218,7 @@ Network::read_bin_attr(string s)
       s2 = int(b2);
       s3 = bool(b3);
       // Updates matrix
-      bMatrix = get_bMatrix();
-      bMatrix.set(s1, s2, s3);
+      set_bin(s1, s2, s3);
     }
   }
   printf("Done reading binary attributes.\n");

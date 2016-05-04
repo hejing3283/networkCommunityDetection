@@ -329,12 +329,12 @@ private:
 
   // Edits
   // Additional private variables
-  uint32_t _norm;
+  uint32_t _gau;
   uint32_t _bin;
   double _eta_G;
   double _delta_G;
   // Additional private matrices
-  normMatrix _nMatrix;
+  gauMatrix _gMatrix;
   binMatrix _bMatirx;
   // Edits
 

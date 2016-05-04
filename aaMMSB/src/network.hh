@@ -26,9 +26,9 @@ public:
     _sparse_zeros(env.n),
     _env(env),
     _curr_seq(0), _ones(0), _single_nodes(0),
-    // Create matrices
-    nMatrix(env.n, env.norm),
-    bMatrix(env.n, env.bin),
+    // edit
+    gMatrix(env.n, env.dgau),
+    bMatrix(env.n, env.dbin),
     _deg(env.n),_avg_deg(.0) { }
   ~Network() { }
 
@@ -40,15 +40,32 @@ public:
   vector<uint32_t> *sparse_zeros(uint32_t a) { return _sparse_zeros[a]; }
 
   uint32_t n() const;
+  //Edit
+  uint32_t dgau() const;
+  uint32_t dbin() const;
+
   yval_t y(uint32_t i, uint32_t j) const;
 
   // Edits
-  int read_norm_attr(string s);
+  int read_gau_attr(string s);
   int read_bin_attr(string s);
   // Create functions to access matrices
-  normMatrix get_nMatrix() { return nMatrix; }
-  binMatrix get_bMatrix() { return bMatrix; }
-  // Edits
+  double get_gau(uint32_t a, uint32_t dg)  {
+    return gMatrix.at(a, dg);
+  }
+  bool get_bin(uint32_t a, uint32_t db)  {
+      return gMatrix.at(a, db);
+  }
+  void set_gau(uint32_t a, uint32_t dg, double x)  {
+     gMatrix.set(a, dg, x);
+    }
+  void set_bin(uint32_t a, uint32_t db, bool x)  {
+       bMatrix.set(a, db, x);
+      }
+  gauMatrix get_gauMatrix(){ return(gMatrix);}
+  binMatrix get_binMatrix(){ return(bMatrix);}
+
+  //edits
 
   const EdgeList &edges() const { return _edges; }
   EdgeList &edgelist() { return _edges; }
@@ -124,7 +141,7 @@ private:
 
   // Edits
   // Create private variables
-  normMatrix nMatrix;
+  gauMatrix gMatrix;
   binMatrix bMatrix;
   // Edits
 
@@ -151,6 +168,17 @@ Network::n() const
   return _sparse_y.size();
 }
 
+//Network::dgau() const
+//{
+//  return _sparse_y.size();
+//}
+//
+//Network::dbin() const
+//{
+//  return _sparse_y.size();
+//}
+
+
 inline bool
 Network::add(uint32_t id)
 {
@@ -175,6 +203,7 @@ Network::is_single(uint32_t a) const
   return false;
 }
 
+// generating indicator Z
 inline yval_t
 Network::y(uint32_t a, uint32_t b) const
 {
@@ -202,6 +231,7 @@ Network::get_edges(uint32_t a)
   return v;
 }
 
+// make sure node a < node b for undirected network
 inline void
 Network::order_edge(const Env &env, Edge &e)
 {

@@ -50,7 +50,7 @@ typedef std::map<uint32_t, string> StrMapInv;
 typedef D1Array<IDMap> KMap;
 
 // Edits
-typedef D2Array<double> normMatrix;
+typedef D2Array<double> gauMatrix;
 typedef D2Array<bool> binMatrix;
 // Edits
 
@@ -125,15 +125,15 @@ public:
   double delta_bin;
   double sbm_delta_bin;
   double infer_delta_bin;
-  double etaglm_bin;
-  double sbm_etaglm_bin;
-  double infer_etaglm_bin;
+  double eta_bin;
+  double sbm_eta_bin;
+  double infer_eta_bin;
   double delta_gau;
   double sbm_delta_gau;
   double infer_delta_gau;
-  double etaglm_gau;
-  double sbm_etaglm_gau;
-  double infer_etaglm_gau;
+  double eta_gau;
+  double sbm_eta_gau;
+  double infer_eta_gau;
   //edit
 
   double eta0;
