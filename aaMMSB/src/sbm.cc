@@ -839,10 +839,13 @@ SBM::opt_process_noninf(vector<uint32_t> &nodes)
   }
 }
 
-
 double
 SBM::heldout_likelihood()
 {
+	// edits
+	// TODO update it with new equation: add extra term for xgau /xbin
+	//edits
+
   if (_env.accuracy)
     return .0;
 
@@ -940,6 +943,10 @@ SBM::heldout_likelihood()
 double
 SBM::validation_likelihood()
 {
+	// edits
+	// TODO update it with new equation: add extra term for xgau /xbin
+	//edits
+
   if (_env.accuracy)
     return .0;
 
@@ -1132,6 +1139,10 @@ SBM::gml()
 double
 SBM::approx_log_likelihood()
 {
+	// edits
+	// TODO update it with new equation: add extra term for xgau /xbin
+	//edits
+
   const double ** const etad = _eta.const_data();
   const double * const alphad = _alpha.const_data();
   const double ** const elogbetad = _Elogbeta.const_data();

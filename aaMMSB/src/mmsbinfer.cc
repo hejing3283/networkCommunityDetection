@@ -2082,6 +2082,7 @@ MMSBInfer::approx_log_likelihood()
   return s;
 }
 
+// TODO: need to add extra items for xgaus, and xbins
 void
 MMSBInfer::heldout_likelihood(double &a, double &a0, double &a1)
 {

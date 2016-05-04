@@ -134,6 +134,7 @@ PhiCompute::update_phis(bool is_phi1)
     	v = .0; // TODO: update using both binary and local updates, eq.36,37 & 53,54,
     }
     anext[k] = elogpid[c][k] + (_Elogf[k] * b[k]) + u + v;
+
     // Edits
   }
   anext.lognormalize();

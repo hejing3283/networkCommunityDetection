@@ -37,6 +37,10 @@ public:
   static const unsigned int THRESH = 0.99;
 
 private:
+  // edits :
+  //  TODO:update all sampling related function to also split the attributies file
+  // edits
+
   void init_heldout();
   void set_heldout_sample(int sz);
   void set_validation_sample(int sz);
@@ -122,6 +126,16 @@ private:
   EdgeList _validation_pairs;
   EdgeList _precision_pairs;
   gsl_rng *_r;
+
+  // edits
+  gauMatrix  _heldout_xgau;
+  gauMatrix _validation_xgau;
+  gauMatrix _precision_xgau;
+
+  binMatrix _heldout_xbin;
+  binMatrix _validation_xbin;
+  gauMatrix _precision_xbin;
+  // edits
 
   Array _gamma;
   Matrix _lambda;
@@ -331,6 +345,10 @@ SBM::edge_ok(const Edge &e) const
 inline void
 SBM::get_random_edge(bool link, Edge &e) const
 {
+	// edits
+	// TODO:update the xgau and xbin associate with the 2 nodes of edge
+	// edits
+
   if (!link) {
     do {
       e.first = gsl_rng_uniform_int(_r, _n);
