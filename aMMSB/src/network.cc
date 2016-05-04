@@ -186,9 +186,11 @@ Network::read_norm_attr(string s)
       s3 = double(b3);
       // Updates matrix
       nMatrix = get_nMatrix();
-      nMatrix.set(s1, s2, s3);
+      nMatrix[s1][s2] = s3;
     }
   }
+  printf("Done reading Gaussian attributes.\n");
+  return 0;
 }
 
 int
@@ -221,6 +223,8 @@ Network::read_bin_attr(string s)
       bMatrix.set(s1, s2, s3);
     }
   }
+  printf("Done reading binary attributes.\n");
+  return 0;
 }
 // Edits
 
