@@ -219,6 +219,21 @@ main(int argc, char **argv)
 
   env.n = network.n() - network.singles();
 
+  //edits
+  if (network.read_gau_attr(gaufname.c_str()) < 0) {
+      fprintf(stderr, "error reading %s; quitting\n", gaufname.c_str());
+      return -1;
+    }
+    info("+ gaussin attributes: dG = %d\n",network.dgau());
+
+  if (network.read_bin_attr(binfname.c_str()) < 0) {
+        fprintf(stderr, "error reading %s; quitting\n", binfname.c_str());
+        return -1;
+      }
+      info("+ binary attributes: dG = %d\n", network.dbin());
+  //edits
+
+
   if (stratified && rnode) {
     FastAMM2 fastamm2(env, network);
     info("+ running mmsb inference (with stratified random node option)\n");
