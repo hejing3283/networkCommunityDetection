@@ -50,8 +50,8 @@ typedef std::map<uint32_t, string> StrMapInv;
 typedef D1Array<IDMap> KMap;
 
 // Edits
-typedef D2Array<double> normMatrix;
-typedef D2Array<bool> binMatrix;
+typedef std::vector<std::vector<double>> normMatrix;
+typedef std::vector<std::vector<double>> binMatrix;
 // Edits
 
 class Env {
@@ -90,10 +90,16 @@ public:
   uint32_t m;
   uint32_t sets_mini_batch;
 
-  // Edit
+  // Edits
+  // d^G
   uint32_t norm;
+  // d^B
   uint32_t bin;
-  // Edit
+  // eta_G
+  double eta_G;
+  // delta_G
+  double delta_G;
+  // Edits
 
   bool informative_sampling;
   bool single;
