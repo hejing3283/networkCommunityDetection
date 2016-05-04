@@ -335,7 +335,7 @@ private:
   double _delta_G;
   // Additional private matrices
   gauMatrix _gMatrix;
-  binMatrix _bMatirx;
+  binMatrix _bMatrix;
   // Edits
 
   yval_t _family;

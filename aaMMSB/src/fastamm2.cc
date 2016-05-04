@@ -12,7 +12,7 @@ FastAMM2::FastAMM2(Env &env, Network &network)
    // Edits
    _gau(env.dgau), _bin(env.dbin),
    _eta_G(env.eta_gau), _delta_G(env.delta_gau),
-   _gMatrix(network.get_gauMatrix()), _bMatrix(network.get_binMatrix(()),
+   _gMatrix(network.get_gauMatrix()), _bMatrix(network.get_binMatrix()),
    // Edits
    _alpha(_k),
    _family(0), _prev_mbsize0(_s), _prev_mbsize1(_s),

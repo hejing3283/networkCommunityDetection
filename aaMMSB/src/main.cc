@@ -53,6 +53,10 @@ main(int argc, char **argv)
   int i = 1;
   uint32_t n = 0, k = 0;
 
+  // edit
+  uint32_t dG = 0, dB = 0;
+  // edit
+
   bool stratified = false, rnode = false, rpair = false;
 
   bool batch = false;
@@ -131,13 +135,21 @@ main(int argc, char **argv)
       n = atoi(argv[++i]);
     } else if (strcmp(argv[i], "-k") == 0) {
       k = atoi(argv[++i]);
+    } else if (strcmp(argv[i], "-dgau") == 0) {
+      dG = atoi(argv[++i]);
+    }else if (strcmp(argv[i], "-dbin") == 0) {
+      dB = atoi(argv[++i]);
     }
     ++i;
   };
 
   assert (!(batch && online));
 
-  Env env(n, k, massive, single, batch, stratified,
+  Env env(n, k,
+		  //edits
+		  dG,dB,
+		  //edits
+		  massive, single, batch, stratified,
 	  nodelay, rpair, rnode,
 	  load, location,
 	  val_load, val_file_location,
