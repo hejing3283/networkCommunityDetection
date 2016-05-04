@@ -69,6 +69,9 @@ public:
       bool adamic,
       uint32_t scale,
       bool dis, bool force_overwrite_dir, string dfname,
+	  //edits
+	  string xgfname, string xbfname,
+	  //edits
       bool ppc, bool run_gap, bool gen, string label,
       uint32_t nthrs, uint32_t itype, string etype,
       bool nmi, string ground_truth_fname, uint32_t rfreq,
@@ -191,6 +194,11 @@ public:
 
   bool terminate;
   string datfname;
+
+  //
+  string gaufname;
+  string binfname;
+  //
 
   // debug
   bool deterministic;
@@ -329,6 +337,9 @@ Env::Env(uint32_t N, uint32_t K,
 	 bool adamic,
 	 uint32_t scale,
 	 bool dis, bool force_overwrite_dir, string dfname,
+	 //
+	 string xgfname, string xbfname,
+	 //
 	 bool ppc, bool gap, bool gen1, string lbl,
 	 uint32_t nthrs, uint32_t itype, string etype,
 	 bool nmival, string gfname, uint32_t rfreq,
@@ -487,6 +498,10 @@ Env::Env(uint32_t N, uint32_t K,
     terminate(false),
 
     datfname(dfname),
+	//edits
+	gaufname(xgfname),
+	binfname(xbfname),
+	//edits
     deterministic(false),
 
     disjoint(dis),

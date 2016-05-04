@@ -45,6 +45,12 @@ main(int argc, char **argv)
   bool run_gap = false;
   bool force_overwrite_dir = true;
   string datfname = "network.dat";
+
+  //edits
+  string gaufname = "attributes_gau.dat";
+  string binfname = "attributes_bin.dat";
+  //edits
+
   bool gen = false, ppc = false, lcstats = false;
   bool gml = false;
   bool findk = false;
@@ -119,10 +125,24 @@ main(int argc, char **argv)
       exit(0);
     } else if (strcmp(argv[i], "-file") == 0) {
       if (i + 1 > argc - 1) {
-	fprintf(stderr, "+ insufficient arguments!\n");
-	exit(-1);
+    	  fprintf(stderr, "+ insufficient arguments!\n");
+    	  exit(-1);
       }
       datfname = string(argv[++i]);
+     // edits
+    }else if (strcmp(argv[i], "-fileGau") == 0) {
+           if (i + 1 > argc - 1) {
+         	  fprintf(stderr, "+ insufficient arguments!\n");
+         	  exit(-1);
+           }
+           gaufname = string(argv[++i]);
+    }else if (strcmp(argv[i], "-fileBin") == 0) {
+               if (i + 1 > argc - 1) {
+             	  fprintf(stderr, "+ insufficient arguments!\n");
+             	  exit(-1);
+               }
+           binfname = string(argv[++i]);
+    // edits
     } else if (strcmp(argv[i], "-stratified") == 0) {
       stratified = true;
       if (rfreq == 1)
@@ -159,6 +179,9 @@ main(int argc, char **argv)
 	  adamic_adar,
 	  scale, disjoint,
 	  force_overwrite_dir, datfname,
+	  //edits
+	  gaufname, binfname,
+	  //edits
 	  ppc, run_gap, gen, label, nthreads, itype, eta_type,
 	  nmi, ground_truth_fname, rfreq,
 	  accuracy, stopthresh, infthresh,
