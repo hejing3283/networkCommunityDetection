@@ -1141,6 +1141,7 @@ SBM::approx_log_likelihood()
 {
 	// edits
 	// TODO update it with new equation: add extra term for xgau /xbin
+	// equations in section 9.1, section 9.2
 	//edits
 
   const double ** const etad = _eta.const_data();
