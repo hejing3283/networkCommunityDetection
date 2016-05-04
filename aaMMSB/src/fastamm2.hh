@@ -117,7 +117,9 @@ PhiCompute::update_phis(bool is_phi1)
     if (_y == 1)
       u = (1 - b[k]) * _env.logepsilon;
     const double ** const elogpid = _Elogpi.const_data();
+
     // Edits
+	// TODO: add slots for binary x.check dgau, dbin to make this happen
     double v = .0;
     double eta_k = _env.eta_gau[k];
     for (uint32_t i = 0; i < _env.dgau; ++i) {
@@ -126,6 +128,7 @@ PhiCompute::update_phis(bool is_phi1)
     }
     anext[k] = elogpid[c][k] + (_Elogf[k] * b[k]) + u + v;
     // Edits
+
   }
   anext.lognormalize();
 
