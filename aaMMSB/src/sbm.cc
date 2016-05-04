@@ -1,7 +1,6 @@
 #include "sbm.hh"
 #include "log.hh"
 #include <sys/time.h>
-using namespace std;
 
 SBM::SBM(Env &env, Network &network)
   :_env(env), _network(network),
@@ -36,14 +35,15 @@ SBM::SBM(Env &env, Network &network)
   fprintf(stdout, "+ sbm initialization begin\n");
   fflush(stdout);
 
-  env.undirected = true;
-  _total_pairs = _n * (_n - 1) / 2;
+  if (env.undirected)
+    _total_pairs = _n * (_n - 1) / 2;
+  else
+    _total_pairs = _n * (_n - 1);
 
   Env::plog("inference n", _n);
   Env::plog("total pairs", _total_pairs);
 
-  _alpha.set_elements(env.sbm_alpha); //default 0.5. The Dirichlet prior on the node mixed-memberships.for pi
-
+  _alpha.set_elements(env.sbm_alpha);
   info("alpha set to %s\n", _alpha.s().c_str());
   fflush(stdout);
 
