@@ -24,15 +24,15 @@
 
 class PhiCompute {
 public:
-  PhiCompute(const Env &env, gsl_rng **r, 
+  PhiCompute(const Env &env, gsl_rng **r,
 	   const uint32_t &iter,
 	  uint32_t n, uint32_t k, uint32_t t,
 	  uint32_t p, uint32_t q, yval_t y,
-	  const Matrix &Elogpi, 
+	  const Matrix &Elogpi,
 	  const Matrix &Elogbeta,
 	  Array &Elogf, bool phifix = false)
     : _env(env), _r(r), _iter(iter),
-      _n(n), _k(k), _t(t), 
+      _n(n), _k(k), _t(t),
       _p(p), _q(q), _y(y),
       _Elogpi(Elogpi), _Elogbeta(Elogbeta),
       _Elogf(Elogf),
@@ -66,7 +66,7 @@ private:
   const Env &_env;
   gsl_rng **_r;
   const uint32_t &_iter;
-  
+
   uint32_t _n;
   uint32_t _k;
   uint32_t _t;
@@ -74,14 +74,14 @@ private:
   uint32_t _p;
   uint32_t _q;
   yval_t _y;
-  
+
   const Matrix &_Elogpi;
   const Matrix &_Elogbeta;
   Array &_Elogf;
 
   Array _v1;
   Array _v2;
-  
+
   Array _phi1;
   Array _phi2;
   Array _phinext1;
@@ -108,7 +108,7 @@ PhiCompute::update_phis(bool is_phi1)
   Array &b = is_phi1 ? _phi2 : _phi1;
   Array &anext = is_phi1 ? _phinext1 : _phinext2;
   uint32_t c = is_phi1 ? _p : _q;
-  
+
   for (uint32_t k = 0; k < _k; ++k) {
     double u = .0;
     if (_y == 1)
@@ -126,7 +126,7 @@ PhiCompute::update_phis(bool is_phi1)
   //assert(s > .0);
   //for (uint32_t i = 0; i < _k; ++i)
   //anext[i] = anext[i] / s;
-  
+
   if (_phifix) {
     if (is_phi1) {
       _phi1.copy_from(_phinext1);
@@ -178,7 +178,7 @@ PhiCompute::update_phis_until_conv()
 
     debug("_phinext1 = %s", _phinext1.s().c_str());
     debug("_phinext2 = %s", _phinext2.s().c_str());
-    
+
     //_v1.zero();
     //_v2.zero();
     sub(_phinext1,_phi1old,_v1);
@@ -192,7 +192,7 @@ PhiCompute::update_phis_until_conv()
 
     if (!_phifix && i % 2 == 0)
       continue;
-    
+
     if (_v1.abs().mean() < _env.meanchangethresh and
 	_v2.abs().mean() < _env.meanchangethresh) {
       debug("v1 mean = %f", _v1.abs().mean());
@@ -241,7 +241,7 @@ private:
   void opt_process_noninf(NodeMap &nodes, FreqMap &counts);
 
   void update_gmap(const double **gdt, uint32_t a, double rho, double scale);
-  
+
   yval_t get_y(uint32_t p, uint32_t q);
   uint32_t precision_ones() const;
   uint32_t precision_zeros() const;
@@ -249,7 +249,7 @@ private:
 
   string edgelist_s(EdgeList &elist);
   uint32_t duration() const;
-  
+
   double approx_log_likelihood();
   void moving_heldout_likelihood(EdgeList &sample) const;
 
@@ -277,9 +277,9 @@ private:
   void shuffle_nodes();
 
 #if 0
-  void get_similar_nodes(uint32_t a, 
+  void get_similar_nodes(uint32_t a,
 			 vector<uint32_t> &neighbors);
-  void get_similar_nodes2(uint32_t a, 
+  void get_similar_nodes2(uint32_t a,
 			 vector<uint32_t> &neighbors);
 #endif
   void get_top_p_communities(uint32_t a, uint32_t p,
@@ -287,14 +287,14 @@ private:
 #ifdef EGO_NETWORK
   void get_Epi(uint32_t n, Array &Epi);
   void write_node_gml(FILE *f, uint32_t a, uint32_t max_k);
-  void write_edge_gml(FILE *f, uint32_t a, 
+  void write_edge_gml(FILE *f, uint32_t a,
 		      uint32_t b, uint32_t color, double weight);
   void ego(const uArray &nodes, uint32_t M);
   void group_stats(const uArray &nodes, uint32_t M);
 
   double bridgeness(uint32_t a);
-  void explore(FILE *f, bool root, uint32_t parent, 
-	       uint32_t a, NodeMap &uniq, BoolMap &tc, 
+  void explore(FILE *f, bool root, uint32_t parent,
+	       uint32_t a, NodeMap &uniq, BoolMap &tc,
 	       uint32_t top_k, uint32_t depth);
   uint32_t most_likely_group(uint32_t p);
 #endif
@@ -327,10 +327,21 @@ private:
   uint32_t _lambda_start_iter;
   Array _alpha;
 
+  // Edits
+  // Additional private variables
+  uint32_t _norm;
+  uint32_t _bin;
+  double _eta_G;
+  double _delta_G;
+  // Additional private matrices
+  normMatrix _nMatrix;
+  binMatrix _bMatirx;
+  // Edits
+
   yval_t _family;
   uint32_t _prev_mbsize0;
   uint32_t _prev_mbsize1;
-  
+
   Matrix _eta;
 
   double _ones_prob;
@@ -353,7 +364,7 @@ private:
   double _kappa;
   double _nodetau0;
   double _nodekappa;
-  
+
   double _rhot;
   Array _noderhot;
   Array _nodec;
@@ -422,7 +433,7 @@ FastAMM2::set_dir_exp(const Matrix &u, Matrix &exp)
   for (uint32_t i = 0; i < u.m(); ++i) {
     // psi(e[i][j]) - psi(sum(e[i]))
     double s = .0;
-    for (uint32_t j = 0; j < u.n(); ++j) 
+    for (uint32_t j = 0; j < u.n(); ++j)
       s += d[i][j];
     fflush(stdout);
     assert (s > .0);
@@ -445,10 +456,10 @@ FastAMM2::set_dir_exp(uint32_t a, const Matrix &u, Matrix &exp)
   double **e = exp.data();
 
   double s = .0;
-  for (uint32_t j = 0; j < u.n(); ++j) 
+  for (uint32_t j = 0; j < u.n(); ++j)
     s += d[a][j];
   double psi_sum = gsl_sf_psi(s);
-  for (uint32_t j = 0; j < u.n(); ++j) 
+  for (uint32_t j = 0; j < u.n(); ++j)
     e[a][j] = gsl_sf_psi(d[a][j]) - psi_sum;
 }
 
@@ -560,7 +571,7 @@ FastAMM2::edge_likelihood(uint32_t p, uint32_t q, yval_t y) const
 
   debug("estimated pi (%d) = %s\n", p, pi_p.s().c_str());
   debug("estimated pi (%d) = %s\n", q, pi_q.s().c_str());
-  
+
   double s = .0;
   if (y == 1) {
     for (uint32_t z = 0; z < _k; ++z)
@@ -586,7 +597,7 @@ FastAMM2::edge_ok(const Edge &e) const
 {
   if (e.first == e.second)
     return false;
-  
+
   const SampleMap::const_iterator u = _heldout_map.find(e);
   if (u != _heldout_map.end())
     return false;
@@ -599,7 +610,7 @@ FastAMM2::edge_ok(const Edge &e) const
 
   return true;
 }
- 
+
 inline void
 FastAMM2::get_random_edge(bool link, Edge &e) const
 {
@@ -659,7 +670,7 @@ FastAMM2::add_to_community_map(uint32_t k, uint32_t p)
 #if 0
 
 inline void
-FastAMM2::get_similar_nodes2(uint32_t n, 
+FastAMM2::get_similar_nodes2(uint32_t n,
 			    vector<uint32_t> &neighbors)
 {
   Array a(_k);
@@ -675,7 +686,7 @@ FastAMM2::get_similar_nodes2(uint32_t n,
 
     Array b(_k);
     _Epi.slice(0, i, b);
-      
+
     if (dot(a,b) >= _env.infthresh)
       neighbors.push_back(i);
   }
@@ -683,7 +694,7 @@ FastAMM2::get_similar_nodes2(uint32_t n,
 }
 
 inline void
-FastAMM2::get_similar_nodes(uint32_t a, 
+FastAMM2::get_similar_nodes(uint32_t a,
 			   vector<uint32_t> &neighbors)
 {
   // choose nodes in the top p communities of node a where p << k
@@ -718,7 +729,7 @@ FastAMM2::get_top_p_communities(uint32_t a, uint32_t p,
 {
   Array g(_k);
   _gamma.slice(0, a, g);
-  
+
   D1Array<KV> v(_k);
   for (uint32_t k = 0; k < _k; ++k) {
     if (g[k] > _alpha[k]) // alpha symmetric

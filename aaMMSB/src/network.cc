@@ -186,9 +186,45 @@ Network::read_norm_attr(string s)
       s3 = double(b3);
       // Updates matrix
       nMatrix = get_nMatrix();
-      nMatrix.set(s1, s2, s3);
+      nMatrix[s1][s2] = s3;
     }
   }
+  printf("Done reading Gaussian attributes.\n");
+  return 0;
+}
+
+int
+Network::read_bin_attr(string s)
+{
+  // Check if file is valid
+  fprintf(stdout, "+ Reading attribute matrix from %s\n", s.c_str());
+  FILE *f = fopen(s.c_str(), "r");
+  if (!f) {
+    lerr("error: cannot open file %s:%s", s.c_str(), strerror(errno));
+    exit(-1);
+  }
+  char b1, b2, b3;
+  uint32_t s1, s2;
+  bool s3;
+
+  while (!feof(f)){
+    // Checks if scan continues, refer to main
+    if (_env.strid) {
+      if (fscanf(f, "%s"DELIM"%s"DELIM"%s\n", &b1, &b2, &b3) < 0) {
+        printf("error: unexpected lines in file\n");
+        exit(-1);
+      }
+      // Cast strings into correct types
+      s1 = int(b1);
+      s2 = int(b2);
+      s3 = bool(b3);
+      // Updates matrix
+      bMatrix = get_bMatrix();
+      bMatrix.set(s1, s2, s3);
+    }
+  }
+  printf("Done reading binary attributes.\n");
+  return 0;
 }
 // Edits
 
