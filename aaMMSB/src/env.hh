@@ -128,15 +128,15 @@ public:
   double delta_bin;
   double sbm_delta_bin;
   double infer_delta_bin;
-  double eta_bin;
-  double sbm_eta_bin;
-  double infer_eta_bin;
+  std::vector<double> eta_bin;
+  std::vector<double> sbm_eta_bin;
+  std::vector<double> infer_eta_bin;
   double delta_gau;
   double sbm_delta_gau;
   double infer_delta_gau;
-  double eta_gau;
-  double sbm_eta_gau;
-  double infer_eta_gau;
+  std::vector<double> eta_gau;
+  std::vector<double> sbm_eta_gau;
+  std::vector<double> infer_eta_gau;
   //edit
 
   double eta0;

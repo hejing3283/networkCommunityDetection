@@ -26,9 +26,10 @@ public:
     _sparse_zeros(env.n),
     _env(env),
     _curr_seq(0), _ones(0), _single_nodes(0),
-    // edit
+    // Edit
     gMatrix(env.n, env.dgau),
     bMatrix(env.n, env.dbin),
+	// Edit
     _deg(env.n),_avg_deg(.0) { }
   ~Network() { }
 
@@ -40,9 +41,16 @@ public:
   vector<uint32_t> *sparse_zeros(uint32_t a) { return _sparse_zeros[a]; }
 
   uint32_t n() const;
+
   //Edit
-  uint32_t dgau() const;
-  uint32_t dbin() const;
+  uint32_t dgau() const{
+	  return _env.dgau;
+  }
+
+  uint32_t dbin() const{
+	  return _env.dbin;
+  }
+  // Edit
 
   yval_t y(uint32_t i, uint32_t j) const;
 
@@ -167,17 +175,6 @@ Network::n() const
 {
   return _sparse_y.size();
 }
-
-//Network::dgau() const
-//{
-//  return _sparse_y.size();
-//}
-//
-//Network::dbin() const
-//{
-//  return _sparse_y.size();
-//}
-
 
 inline bool
 Network::add(uint32_t id)
