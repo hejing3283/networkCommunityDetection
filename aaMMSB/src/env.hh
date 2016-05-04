@@ -21,7 +21,6 @@ typedef uint8_t yval_t;
 
 typedef D2Array<yval_t> AdjMatrix;
 typedef D2Array<double> Matrix;
-typedef D2Array<bool> BMatrix;
 typedef D3Array<double> D3;
 typedef D2Array<KV> MatrixKV;
 typedef D1Array<KV> KVArray;
@@ -50,10 +49,18 @@ typedef std::map<Edge, double> ValueMap;
 typedef std::map<uint32_t, string> StrMapInv;
 typedef D1Array<IDMap> KMap;
 
+// Edits
+typedef D2Array<double> normMatrix;
+typedef D2Array<bool> binMatrix;
+// Edits
+
 class Env {
 public:
-  Env(uint32_t N, uint32_t K, bool massive,
-      bool sbm, bool batch, bool strat, bool nodelay,
+  Env(uint32_t N, uint32_t K, // number of node, number of community
+	 // edit
+	 uint32_t dG, uint32_t dB, // number of gaussian and binary attributes
+	  // edit
+	  bool massive, bool sbm, bool batch, bool strat, bool nodelay,
       bool rpair, bool rnode, bool load, string location,
       bool val_load, string val_file_location,
       bool test_load, string test_file_location,
@@ -79,12 +86,19 @@ public:
   static string prefix;
   static Logger::Level level;
 
-  uint32_t n; // number of nodes;
-  uint32_t k; // number of communities
+  uint32_t n;
+  uint32_t k;
+
+  // Edit
+  uint32_t dgau;
+  uint32_t dbin;
+  // Edit
+
   uint32_t t;
   uint32_t s;
   uint32_t m;
   uint32_t sets_mini_batch;
+
 
   bool informative_sampling;
   bool single;
@@ -93,7 +107,7 @@ public:
   int illegal_likelihood;
   int max_draw_edges;
   double meanchangethresh;
-  double alpha;
+  double alpha; //
   double sbm_alpha;
   double infer_alpha;
   bool model_load;
@@ -107,11 +121,27 @@ public:
   bool adamic_adar;
   uint32_t subsample_scale;
 
+  //edit: parameters for GLM
+  double delta_bin;
+  double sbm_delta_bin;
+  double infer_delta_bin;
+  double etaglm_bin;
+  double sbm_etaglm_bin;
+  double infer_etaglm_bin;
+  double delta_gau;
+  double sbm_delta_gau;
+  double infer_delta_gau;
+  double etaglm_gau;
+  double sbm_etaglm_gau;
+  double infer_etaglm_gau;
+  //edit
+
   double eta0;
   double eta1;
   double heldout_ratio;
   double precision_ratio;
 
+  // parameters for beta, the community strength
   double eta0_dense;
   double eta1_dense;
   double eta0_uniform;
@@ -121,26 +151,29 @@ public:
   double eta0_gen;
   double eta1_gen;
 
+
+
+  // parameters for the case where no link
   int reportfreq;
   double epsilon;
   double logepsilon;
 
-  double tau0;
-  double nodetau0;
-  double nodekappa;
+  double tau0; // control learning rate, equation (9) in paper
+  double nodetau0; //??
+  double nodekappa; // control learning rate, equation(9) in paper
   double kappa;
-  uint32_t online_iterations;
-  uint32_t conv_nupdates;
+  uint32_t online_iterations;// t
+  uint32_t conv_nupdates; //convergence criteria parameters
   double conv_thresh1;
   double conv_thresh2;
 
-  bool stratified;
+  bool stratified; // we are going to use
   bool delaylearn;
   bool nolambda;
   bool undirected;
   bool randompair;
   bool randomnode;
-  bool bfs;
+  bool bfs; // TODO
   uint32_t bfs_nodes;
   bool citation;
   bool accuracy;
@@ -283,7 +316,11 @@ Env::file_str(string dir, string fname)
 }
 
 inline
-Env::Env(uint32_t N, uint32_t K, bool massive,
+Env::Env(uint32_t N, uint32_t K,
+		//edit
+	 uint32_t dG, uint32_t dB,
+	 //edit
+	 bool massive,
 	 bool sbm, bool batch, bool strat, bool nodelay,
 	 bool rpair, bool rnode, bool load, string location,
 	 bool val_load, string val_file_location,
@@ -305,6 +342,10 @@ Env::Env(uint32_t N, uint32_t K, bool massive,
 	 bool link_sampling_opt, bool gml, bool findk)
   : n(N),
     k(K),
+	//Edit
+	dgau(dG),
+	dbin(dB),
+	//Edit
     t(2),
 
     /*
