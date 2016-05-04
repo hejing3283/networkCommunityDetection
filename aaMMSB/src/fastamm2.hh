@@ -122,13 +122,19 @@ PhiCompute::update_phis(bool is_phi1)
 	// TODO: add slots for binary x.check dgau, dbin to make this happen
     double v = .0;
     double eta_k = _env.eta_gau[k];
-    for (uint32_t i = 0; i < _env.dgau; ++i) {
-      v += (_net.get_gau(c, i) * eta_k) / (_env.n * _env.delta_gau) 
-            - (eta_k * eta_k) / (2.0 * _env.n * _env.delta_gau);
+    if ( _env.dgau > 0 & _env.dbin == 0){
+		for (uint32_t i = 0; i < _env.dgau; ++i) {
+		  v += (_net.get_gau(c, i) * eta_k) / (_env.n * _env.delta_gau)
+				- (eta_k * eta_k) / (2.0 * _env.n * _env.delta_gau);
+		}
+
+    }else if(_env.dgau == 0 & _env.dbin > 0){
+    	v = .0; // TODO: update using only  binary local updates, eq. 53 & 54
+    }else if(_env.dgau > 0 & _env.dbin > 0){
+    	v = .0; // TODO: update using both binary and local updates, eq.36,37 & 53,54,
     }
     anext[k] = elogpid[c][k] + (_Elogf[k] * b[k]) + u + v;
     // Edits
-
   }
   anext.lognormalize();
 
