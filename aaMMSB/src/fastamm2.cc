@@ -1,7 +1,5 @@
 /* Edit */
-// For diagonalizing vectors
-#include <eigen3/Eigen/Dense>
-
+#include <eigen3/Eigen/Core>
 /* Edit */
 #include "fastamm2.hh"
 #include "log.hh"
@@ -12,11 +10,11 @@ int FastAMM2::eb = 0;
 
 FastAMM2::FastAMM2(Env &env, Network &network)
   :_env(env), _network(network),
-   _n(env.n), _k(env.k),
+   _n(env.n), _k(env.k), _const_k(env.k),
    _t(env.t), _s(env.s), _m(10),
    // Edits
    _gau(env.dgau), _bin(env.dbin),
-   _eta_gau(env.eta_gau), _delta_G(env.delta_gau),
+   _eta_gau(env.eta_gau), _delta_gau(env.delta_gau),
    _gMatrix(network.get_gauMatrix()), _bMatrix(network.get_binMatrix()),
    // Edits
    _alpha(_k),
@@ -959,6 +957,13 @@ FastAMM2::opt_process(NodeMap &nodes,
     singleton = true;
 
   uint32_t l_size = 0;
+
+  // Edit
+  // Create phi_bar
+  Array phi_sum = Array(_k);
+  phi_sum.zero();
+  // Edit
+
   if (!singleton) {
     _total_pairs_sampled += edges->size();
     for (uint32_t i = 0; i < edges->size(); ++i) {
@@ -1001,22 +1006,10 @@ FastAMM2::opt_process(NodeMap &nodes,
 
       const Array &phi1 = _pcomp.phi1();
       const Array &phi2 = _pcomp.phi2();
-
-      // Edits
-      // Calculate all phi_bars
-      for (uint32_t n = 0; n < _n, ++n){
-
-      }
-
-
-
-      for (uint32_t n = 0; n < _n, ++n){
-    	  for (unit32_t g = 0; g < _gau, ++g){
-
-    	  }
-      }
-
-      // Edits
+      // Edit
+      phi_sum.add_to(phi1);
+      phi_sum.add_to(phi2);
+      // Edit
 
       _gammat.add_slice(p, phi1);
       _gammat.add_slice(q, phi2);
@@ -1026,6 +1019,50 @@ FastAMM2::opt_process(NodeMap &nodes,
 	  ldt[k][t] += phi1[k] * phi2[k] * (t == 0 ? y : (1-y));
     }
   }
+
+  // Edit
+
+  // Calculate eta_G
+  // Convert phi_sum to Eigen Matrix
+  Eigen::MatrixXd eigen_phi_sum(_k, 1) ;
+  for (uint32_t i = 0; i < _k; ++i)
+	  eigen_phi_sum(i) = phi_sum.data()[i];
+
+  Eigen::MatrixXd eigen_phi_bar(_k, 1);
+  eigen_phi_bar = eigen_phi_sum / _total_pairs_sampled;
+
+  Eigen::MatrixXd eta_g_top = Eigen::MatrixXd::Zero(_k);
+  for (uint32_t i = 0; i < _n; ++i){
+	  for (uint32_t j = 0; j < _env.dgau; ++j){
+		  eta_g_top += _network.get_gau(i, j) * eigen_phi_bar;
+	  }
+  }
+
+  Eigen::MatrixXd eta_g_bot = Eigen::MatrixXd::Zero(_k, _k);
+  eta_g_bot += _gau *_n * eigen_phi_bar.asDiagonal();
+
+  // Change Eigen Matrix back to D1Array
+  Eigen::MatrixXd eta_gau_temp(_k, 1);
+  eta_gau_temp = eta_g_top * eta_g_bot;
+  for (uint32_t i = 0; i < _k; ++i)
+	  _eta_gau[i] = eta_gau_temp(i);
+  // Calculate eta_G
+
+  // Calculate dLddelta
+  double dLddelta = 0;
+  for (uint32_t i = 0; i < _n; ++i){
+	  for (uint32_t j = 0; j < _env.dgau; ++j){
+		  dLddelta += eta_gau_temp.transpose() * eigen_phi_bar.asDiagonal() * eta_gau_temp;
+//				  	  - (double) 1.0/(2 * _delta_gau) +
+//				  	  pow(_network.get_gau(i, j),2) / (4 * pow(_delta_gau, 2)) +
+//				      (double) 1.0/pow(_delta_gau, 2) *
+//					  (eta_gau_temp.transpose() * eigen_phi_bar * _network.get_gau(i, j)
+//							  - 0.5 * eta_gau_temp.transpose() * eigen_phi_bar.asDiagonal() * eta_gau_temp);
+	  }
+  }
+  // Calculate dLddelta
+
+  // Edit
 
 #ifdef PERF
   debug("time for %ld edge updates = %ld:%ld\n", edges->size(),

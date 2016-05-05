@@ -340,6 +340,7 @@ private:
 
   uint64_t _n;
   uint32_t _k;
+  const uint32_t _const_k;
   uint32_t _t;
   uint32_t _s;
   uint64_t _m;
@@ -353,7 +354,7 @@ private:
   uint32_t _bin;
   std::vector<double> _eta_gau;
   std::vector<double> _eta_bin;
-  double _delta_G;
+  double _delta_gau;
   // Additional private matrices
   gauMatrix _gMatrix;
   binMatrix _bMatrix;
