@@ -1,5 +1,6 @@
 /* Edit */
 #include <eigen3/Eigen/Core>
+#include <math.h>
 /* Edit */
 #include "fastamm2.hh"
 #include "log.hh"
@@ -1033,7 +1034,7 @@ FastAMM2::opt_process(NodeMap &nodes,
 
   Eigen::MatrixXd eta_g_top = Eigen::MatrixXd::Zero(_k, 1);
   for (uint32_t i = 0; i < _n; ++i){
-	  for (uint32_t j = 0; j < _env.dgau; ++j){
+	  for (uint32_t j = 0; j < _gau; ++j){
 		  eta_g_top += _network.get_gau(i, j) * eigen_phi_bar;
 	  }
   }
@@ -1048,19 +1049,57 @@ FastAMM2::opt_process(NodeMap &nodes,
 	  _eta_gau[i] = eta_gau_temp(i);
   // Calculate eta_G
 
-  // Calculate dLddelta_gau
-  double dLddelta_gau = 0;
+  // Calculate grad_delta_gau
+  // double grad_delta_gau = 0;
+  double grad_delta_gau_common = 0;
+  double _delta_gau_squared = pow(_delta_gau, 2);
+  // To prevent overloading
+  Eigen::MatrixXd t_1_g = eta_gau_temp.transpose() * eigen_phi_bar;
+  Eigen::MatrixXd t_2_g = eta_gau_temp.transpose() * eigen_phi_bar.asDiagonal() * eta_gau_temp;
   for (uint32_t i = 0; i < _n; ++i){
-	  for (uint32_t j = 0; j < _env.dgau; ++j){
-		  Eigen::MatrixXd t_1 = eta_gau_temp.transpose() * eigen_phi_bar;
-		  Eigen::MatrixXd t_2 = eta_gau_temp.transpose() * eigen_phi_bar.asDiagonal() * eta_gau_temp;
-		  dLddelta_gau += - (double) 1.0/(2 * _delta_gau) +
-				  	  	  pow(_network.get_gau(i, j),2) / (4 * pow(_delta_gau, 2)) +
-						  (double) 1.0/pow(_delta_gau, 2) *
-						  (t_1(0,0) * _network.get_gau(i, j) - 0.5 * t_2(0));
+	  for (uint32_t j = 0; j < _gau; ++j){
+  //      grad_delta_gau += - (double) 1.0/(2 * _delta_gau);
+		  grad_delta_gau_common += pow(_network.get_gau(i, j),2) / (4 * _delta_gau_squared) -
+						  	  	  	 (double) 1.0/_delta_gau_squared *
+									 (t_1_g(0,0) * _network.get_gau(i, j) - 0.5 * t_2_g(0,0));
 	  }
   }
-  // Calculate dLddelta
+  // Add common terms
+  double grad_delta_gau = _n * _gau* - (double) 1.0/(2 * _delta_gau) + grad_delta_gau_common;
+  // Calculate grad_delta_gau
+
+  // Calculate el_gau
+  double el_gau = -0.5 * _n * _gau * log(2 * M_PI * _delta_gau) + grad_delta_gau_common;
+  // Calculate el_gau
+
+//  // Calculate grad_eta_bin
+//  double grad_eta_bin = 0;
+//  double t_2_exped = -(eta_bin.transpose() * eigen_phi_bar);
+//  double t_2_eta_bin = eigen_phi_bar / (1 + exp(t_2_exped));
+//  for (uint32_t i = 0; i < _n; ++i){
+//  	  for (uint32_t j = 0; j < _bin; ++j){
+//  		  grad_eta_bin += eigen_phi_bar * _network.get_bin(i, j) - t_2_eta_bin;
+//  	  }
+//  }
+//  grad_eta_bin /= _delta_bin;
+//  // Calculate grad_eta_bin
+//
+//  // Calculate el_bin
+//  double el_bin = 0;
+//  double t_1_el_bin = -t_2_exped;
+//  double t_2_el_bin = -log(1 + exp(t_1_el_bin));
+//  for (uint32_t i = 0; i < _n; ++i){
+//    for (uint32_t j = 0; j < _bin; ++j){
+//    	grad_eta_bin += t_1_el_bin * _network.get_bin(i, j) + t_2_el_bin;
+//    }
+//  }
+//  el_bin /= _delta_bin;
+//  // Calculate el_bin
+//
+//  // Calculate grad_delta_bin
+//  double grad_delta_bin = el_bin / _delta_bin;
+//  // Calculate grad_delta_bin
+
   // Edit
 
 #ifdef PERF
