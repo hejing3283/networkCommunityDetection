@@ -128,13 +128,13 @@ private:
   gsl_rng *_r;
 
   // edits
-  gauMatrix  _heldout_xgau;
-  gauMatrix _validation_xgau;
-  gauMatrix _precision_xgau;
-
-  binMatrix _heldout_xbin;
-  binMatrix _validation_xbin;
-  gauMatrix _precision_xbin;
+//  gauMatrix  _heldout_xgau;
+//  gauMatrix _validation_xgau;
+//  gauMatrix _precision_xgau;
+//
+//  binMatrix _heldout_xbin;
+//  binMatrix _validation_xbin;
+//  gauMatrix _precision_xbin;
   // edits
 
   Array _gamma;
