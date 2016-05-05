@@ -11,7 +11,7 @@ int FastAMM2::eb = 0;
 
 FastAMM2::FastAMM2(Env &env, Network &network)
   :_env(env), _network(network),
-   _n(env.n), _k(env.k), _const_k(env.k),
+   _n(env.n), _k(env.k),
    _t(env.t), _s(env.s), _m(10),
    // Edits
    _gau(env.dgau), _bin(env.dbin),
@@ -963,10 +963,15 @@ FastAMM2::opt_process(NodeMap &nodes,
   // Create phi_bar
   Array phi_sum = Array(_k);
   phi_sum.zero();
+  // Accumulate number of nodes seen
+  uint32_t normalize_size = 0;
   // Edit
 
   if (!singleton) {
     _total_pairs_sampled += edges->size();
+    // Edit //
+    normalize_size += edges->size();
+    // Edit
     for (uint32_t i = 0; i < edges->size(); ++i) {
       uint32_t a = (*edges)[i];
 
@@ -1021,87 +1026,6 @@ FastAMM2::opt_process(NodeMap &nodes,
     }
   }
 
-  // Edit
-
-  // Calculate eta_G
-  // Convert phi_sum to Eigen Matrix
-  Eigen::MatrixXd eigen_phi_bar(_k, 1) ;
-  for (uint32_t i = 0; i < _k; ++i)
-	  eigen_phi_bar(i) = phi_sum.data()[i] / _total_pairs_sampled;
-
-//  Eigen::MatrixXd eigen_phi_bar(_k, 1);
-//  eigen_phi_bar = eigen_phi_sum / _total_pairs_sampled;
-
-  Eigen::MatrixXd eta_g_top = Eigen::MatrixXd::Zero(_k, 1);
-  for (uint32_t i = 0; i < _n; ++i){
-	  for (uint32_t j = 0; j < _gau; ++j){
-		  eta_g_top += _network.get_gau(i, j) * eigen_phi_bar;
-	  }
-  }
-
-  Eigen::MatrixXd eta_g_bot = Eigen::MatrixXd::Zero(_k, _k);
-  eta_g_bot += _gau *_n * eigen_phi_bar.asDiagonal();
-
-  // Change Eigen Matrix back to D1Array
-  Eigen::MatrixXd eta_gau_temp(_k, 1);
-  eta_gau_temp = eta_g_top * eta_g_bot;
-  for (uint32_t i = 0; i < _k; ++i)
-	  _eta_gau[i] = eta_gau_temp(i);
-  // Calculate eta_G
-
-  // Calculate grad_delta_gau
-  // double grad_delta_gau = 0;
-  double grad_delta_gau_common = 0;
-  double _delta_gau_squared = pow(_delta_gau, 2);
-  // To prevent overloading
-  Eigen::MatrixXd t_1_g = eta_gau_temp.transpose() * eigen_phi_bar;
-  Eigen::MatrixXd t_2_g = eta_gau_temp.transpose() * eigen_phi_bar.asDiagonal() * eta_gau_temp;
-  for (uint32_t i = 0; i < _n; ++i){
-	  for (uint32_t j = 0; j < _gau; ++j){
-  //      grad_delta_gau += - (double) 1.0/(2 * _delta_gau);
-		  grad_delta_gau_common += pow(_network.get_gau(i, j),2) / (4 * _delta_gau_squared) -
-						  	  	  	 (double) 1.0/_delta_gau_squared *
-									 (t_1_g(0,0) * _network.get_gau(i, j) - 0.5 * t_2_g(0,0));
-	  }
-  }
-  // Add common terms
-  double grad_delta_gau = _n * _gau* - (double) 1.0/(2 * _delta_gau) + grad_delta_gau_common;
-  // Calculate grad_delta_gau
-
-  // Calculate el_gau
-  double el_gau = -0.5 * _n * _gau * log(2 * M_PI * _delta_gau) + grad_delta_gau_common;
-  // Calculate el_gau
-
-//  // Calculate grad_eta_bin
-//  double grad_eta_bin = 0;
-//  double t_2_exped = -(eta_bin.transpose() * eigen_phi_bar);
-//  double t_2_eta_bin = eigen_phi_bar / (1 + exp(t_2_exped));
-//  for (uint32_t i = 0; i < _n; ++i){
-//  	  for (uint32_t j = 0; j < _bin; ++j){
-//  		  grad_eta_bin += eigen_phi_bar * _network.get_bin(i, j) - t_2_eta_bin;
-//  	  }
-//  }
-//  grad_eta_bin /= _delta_bin;
-//  // Calculate grad_eta_bin
-//
-//  // Calculate el_bin
-//  double el_bin = 0;
-//  double t_1_el_bin = -t_2_exped;
-//  double t_2_el_bin = -log(1 + exp(t_1_el_bin));
-//  for (uint32_t i = 0; i < _n; ++i){
-//    for (uint32_t j = 0; j < _bin; ++j){
-//    	grad_eta_bin += t_1_el_bin * _network.get_bin(i, j) + t_2_el_bin;
-//    }
-//  }
-//  el_bin /= _delta_bin;
-//  // Calculate el_bin
-//
-//  // Calculate grad_delta_bin
-//  double grad_delta_bin = el_bin / _delta_bin;
-//  // Calculate grad_delta_bin
-
-  // Edit
-
 #ifdef PERF
   debug("time for %ld edge updates = %ld:%ld\n", edges->size(),
 	s.tv_sec, s.tv_usec);
@@ -1116,6 +1040,9 @@ FastAMM2::opt_process(NodeMap &nodes,
   else
     debug("no zeros for %d\n", _start_node);
 
+  // Edit
+  normalize_size += zeros->size();
+  // Edit
   uint32_t nl_inf_size = 0;
   for (uint32_t i = 0; zeros && i < zeros->size(); ++i) {
     uint32_t a = (*zeros)[i];
@@ -1157,6 +1084,10 @@ FastAMM2::opt_process(NodeMap &nodes,
 
     const Array &phi1 = _pcomp.phi1();
     const Array &phi2 = _pcomp.phi2();
+    // Edit
+    phi_sum.add_to(phi1);
+    phi_sum.add_to(phi2);
+    // Edit
 
     _gammat.add_slice(p, phi1);
     _gammat.add_slice(q, phi2);
@@ -1172,6 +1103,87 @@ FastAMM2::opt_process(NodeMap &nodes,
 	zeros->size(),
 	s.tv_sec, s.tv_usec);
 #endif
+
+  // Edit
+
+  // Calculate eta_G
+  // Convert phi_sum to Eigen Matrix
+  Eigen::MatrixXd eigen_phi_bar(_k, 1) ;
+  for (uint32_t i = 0; i < _k; ++i)
+    eigen_phi_bar(i) = phi_sum.data()[i] / normalize_size;
+
+//  Eigen::MatrixXd eigen_phi_bar(_k, 1);
+//  eigen_phi_bar = eigen_phi_sum / _total_pairs_sampled;
+
+  Eigen::MatrixXd eta_g_top = Eigen::MatrixXd::Zero(_k, 1);
+  for (uint32_t i = 0; i < _n; ++i){
+    for (uint32_t j = 0; j < _gau; ++j){
+      eta_g_top += _network.get_gau(i, j) * eigen_phi_bar;
+    }
+  }
+
+  Eigen::MatrixXd eta_g_bot = Eigen::MatrixXd::Zero(_k, _k);
+  eta_g_bot += _gau *_n * eigen_phi_bar.asDiagonal();
+
+  // Change Eigen Matrix back to D1Array
+  Eigen::MatrixXd eta_gau_temp(_k, 1);
+  eta_gau_temp = eta_g_top * eta_g_bot;
+  for (uint32_t i = 0; i < _k; ++i)
+    _eta_gau[i] = eta_gau_temp(i);
+  // Calculate eta_G
+
+  // Calculate grad_delta_gau
+  // double grad_delta_gau = 0;
+  double grad_delta_gau_common = 0;
+  double _delta_gau_squared = pow(_delta_gau, 2);
+  // To prevent overloading
+  Eigen::MatrixXd t_1_g = eta_gau_temp.transpose() * eigen_phi_bar;
+  Eigen::MatrixXd t_2_g = eta_gau_temp.transpose() * eigen_phi_bar.asDiagonal() * eta_gau_temp;
+  for (uint32_t i = 0; i < _n; ++i){
+    for (uint32_t j = 0; j < _gau; ++j){
+  //      grad_delta_gau += - (double) 1.0/(2 * _delta_gau);
+      grad_delta_gau_common += pow(_network.get_gau(i, j),2) / (4 * _delta_gau_squared) -
+                         (double) 1.0/_delta_gau_squared *
+                   (t_1_g(0,0) * _network.get_gau(i, j) - 0.5 * t_2_g(0,0));
+    }
+  }
+  // Add common terms
+  double grad_delta_gau = _n * _gau* - (double) 1.0/(2 * _delta_gau) + grad_delta_gau_common;
+  // Calculate grad_delta_gau
+
+  // Calculate el_gau
+  double el_gau = -0.5 * _n * _gau * log(2 * M_PI * _delta_gau) + grad_delta_gau_common;
+  // Calculate el_gau
+
+//  // Calculate grad_eta_bin
+//  double grad_eta_bin = 0;
+//  double t_2_exped = -(eta_bin.transpose() * eigen_phi_bar);
+//  double t_2_eta_bin = eigen_phi_bar / (1 + exp(t_2_exped));
+//  for (uint32_t i = 0; i < _n; ++i){
+//      for (uint32_t j = 0; j < _bin; ++j){
+//        grad_eta_bin += eigen_phi_bar * _network.get_bin(i, j) - t_2_eta_bin;
+//      }
+//  }
+//  grad_eta_bin /= _delta_bin;
+//  // Calculate grad_eta_bin
+//
+//  // Calculate el_bin
+//  double el_bin = 0;
+//  double t_1_el_bin = -t_2_exped;
+//  double t_2_el_bin = -log(1 + exp(t_1_el_bin));
+//  for (uint32_t i = 0; i < _n; ++i){
+//    for (uint32_t j = 0; j < _bin; ++j){
+//      grad_eta_bin += t_1_el_bin * _network.get_bin(i, j) + t_2_el_bin;
+//    }
+//  }
+//  el_bin /= _delta_bin;
+//  // Calculate el_bin
+//
+//  // Calculate grad_delta_bin
+//  double grad_delta_bin = el_bin / _delta_bin;
+//  // Calculate grad_delta_bin
+
+  // Edit
 }
 
 void
@@ -1228,6 +1240,11 @@ FastAMM2::opt_process_noninf(NodeMap &nodes,
   };
   info("noninf sample size = %ld\n", sample.size());
 
+  // Edit
+  Array phi_sum = Array(_k);
+  phi_sum.zero();
+  // Edit
+
   _total_pairs_sampled += sample.size();
 
   for (uint32_t i = 0; i < sample.size(); ++i) {
@@ -1258,6 +1275,11 @@ FastAMM2::opt_process_noninf(NodeMap &nodes,
     const Array &phi1 = _pcomp.phi1();
     const Array &phi2 = _pcomp.phi2();
 
+    // Edit
+    phi_sum.add_to(phi1);
+    phi_sum.add_to(phi2);
+    // Edit
+
     _gammat.add_slice(p, phi1);
     _gammat.add_slice(q, phi2);
 
@@ -1265,6 +1287,86 @@ FastAMM2::opt_process_noninf(NodeMap &nodes,
       for (uint32_t t = 0; t < _t; ++t)
 	ldt[k][t] += phi1[k] * phi2[k] * (t == 0 ? y : (1-y));
   }
+    // Edit
+
+  // Calculate eta_G
+  // Convert phi_sum to Eigen Matrix
+  Eigen::MatrixXd eigen_phi_bar(_k, 1) ;
+  for (uint32_t i = 0; i < _k; ++i)
+    eigen_phi_bar(i) = phi_sum.data()[i] / sample.size();
+
+//  Eigen::MatrixXd eigen_phi_bar(_k, 1);
+//  eigen_phi_bar = eigen_phi_sum / _total_pairs_sampled;
+
+  Eigen::MatrixXd eta_g_top = Eigen::MatrixXd::Zero(_k, 1);
+  for (uint32_t i = 0; i < _n; ++i){
+    for (uint32_t j = 0; j < _gau; ++j){
+      eta_g_top += _network.get_gau(i, j) * eigen_phi_bar;
+    }
+  }
+
+  Eigen::MatrixXd eta_g_bot = Eigen::MatrixXd::Zero(_k, _k);
+  eta_g_bot += _gau *_n * eigen_phi_bar.asDiagonal();
+
+  // Change Eigen Matrix back to D1Array
+  Eigen::MatrixXd eta_gau_temp(_k, 1);
+  eta_gau_temp = eta_g_top * eta_g_bot;
+  for (uint32_t i = 0; i < _k; ++i)
+    _eta_gau[i] = eta_gau_temp(i);
+  // Calculate eta_G
+
+  // Calculate grad_delta_gau
+  // double grad_delta_gau = 0;
+  double grad_delta_gau_common = 0;
+  double _delta_gau_squared = pow(_delta_gau, 2);
+  // To prevent overloading
+  Eigen::MatrixXd t_1_g = eta_gau_temp.transpose() * eigen_phi_bar;
+  Eigen::MatrixXd t_2_g = eta_gau_temp.transpose() * eigen_phi_bar.asDiagonal() * eta_gau_temp;
+  for (uint32_t i = 0; i < _n; ++i){
+    for (uint32_t j = 0; j < _gau; ++j){
+  //      grad_delta_gau += - (double) 1.0/(2 * _delta_gau);
+      grad_delta_gau_common += pow(_network.get_gau(i, j),2) / (4 * _delta_gau_squared) -
+                         (double) 1.0/_delta_gau_squared *
+                   (t_1_g(0,0) * _network.get_gau(i, j) - 0.5 * t_2_g(0,0));
+    }
+  }
+  // Add common terms
+  double grad_delta_gau = _n * _gau* - (double) 1.0/(2 * _delta_gau) + grad_delta_gau_common;
+  // Calculate grad_delta_gau
+
+  // Calculate el_gau
+  double el_gau = -0.5 * _n * _gau * log(2 * M_PI * _delta_gau) + grad_delta_gau_common;
+  // Calculate el_gau
+
+//  // Calculate grad_eta_bin
+//  double grad_eta_bin = 0;
+//  double t_2_exped = -(eta_bin.transpose() * eigen_phi_bar);
+//  double t_2_eta_bin = eigen_phi_bar / (1 + exp(t_2_exped));
+//  for (uint32_t i = 0; i < _n; ++i){
+//      for (uint32_t j = 0; j < _bin; ++j){
+//        grad_eta_bin += eigen_phi_bar * _network.get_bin(i, j) - t_2_eta_bin;
+//      }
+//  }
+//  grad_eta_bin /= _delta_bin;
+//  // Calculate grad_eta_bin
+//
+//  // Calculate el_bin
+//  double el_bin = 0;
+//  double t_1_el_bin = -t_2_exped;
+//  double t_2_el_bin = -log(1 + exp(t_1_el_bin));
+//  for (uint32_t i = 0; i < _n; ++i){
+//    for (uint32_t j = 0; j < _bin; ++j){
+//      grad_eta_bin += t_1_el_bin * _network.get_bin(i, j) + t_2_el_bin;
+//    }
+//  }
+//  el_bin /= _delta_bin;
+//  // Calculate el_bin
+//
+//  // Calculate grad_delta_bin
+//  double grad_delta_bin = el_bin / _delta_bin;
+//  // Calculate grad_delta_bin
+
+  // Edit
 }
 
 double

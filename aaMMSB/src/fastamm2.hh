@@ -341,7 +341,6 @@ private:
 
   uint64_t _n;
   uint32_t _k;
-  const uint32_t _const_k;
   uint32_t _t;
   uint32_t _s;
   uint64_t _m;
