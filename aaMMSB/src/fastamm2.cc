@@ -941,7 +941,7 @@ FastAMM2::compute_and_log_groups()
 
 void
 FastAMM2::opt_process(NodeMap &nodes,
-		      FreqMap &counts)
+ 		      FreqMap &counts)
 {
   _start_node = gsl_rng_uniform_int(_r, _n);
   double **ldt = _lambdat.data();
