@@ -1283,22 +1283,22 @@ FastAMM2::approx_log_likelihood()
       double *elogfd = Elogf.data();
 
       for (uint32_t k = 0; k < _k; ++k)
-	s += phi1[k] * phi2[k] * elogfd[k];
+    	  s += phi1[k] * phi2[k] * elogfd[k];
 
       if (y == 1)
 	for (uint32_t g = 0; g < _k; ++g)
 	  for (uint32_t h = 0; h < _k; ++h)
-	    if (g != h)
-	      s += phi1[g] * phi2[h] * _env.logepsilon;
+		if (g != h)
+		  s += phi1[g] * phi2[h] * _env.logepsilon;
 
       for (uint32_t k = 0; k < _k; ++k) {
-	s += phi1[k] * elogpid[p][k];
-	s += phi2[k] * elogpid[q][k];
+    	  s += phi1[k] * elogpid[p][k];
+    	  s += phi2[k] * elogpid[q][k];
       }
 
       for (uint32_t k = 0; k < _k; ++k) {
-	s -= log(phi1[k]) * phi1[k];
-	s -= log(phi2[k]) * phi2[k];
+    	  s -= log(phi1[k]) * phi1[k];
+    	  s -= log(phi2[k]) * phi2[k];
       }
     }
   }
@@ -1331,20 +1331,15 @@ FastAMM2::approx_log_likelihood()
 
     //edits
     v = .0;
-    if ( _env.dgau > 0 & _env.dbin == 0){
+    if ( _env.dgau > 0){
    		for (uint32_t i = 0; i < _env.dgau; ++i)
 		// TODO: @ sky, put the last term of gaussian likelihood instead of 0.0
    			v += (-1.0 *_network.get_gau(p, i) * _network.get_gau(p, i)) / ( 2 * _env.delta_gau) - 1.0 / 2.0 * log( 2 * 3.1415 * _env.delta_gau)  + .0;
-   	}else if(_env.dgau == 0 & _env.dbin > 0){
+    }
+   	if(_env.dbin > 0){
 		//TODO: @ sky, update using only  binary local updates, eq. 53 & 54
 		for (uint32_t i = 0; i< _env.dbin; ++i)
-			v += 0.0;
-   	}else if(_env.dgau > 0 & _env.dbin > 0){
-   		for (uint32_t i = 0; i < _env.dgau; ++i)
-   			// TODO: @ sky, put the last term of gaussian likelihood instead of 0.0
-   			v += (-1.0 *_network.get_gau(p, i) * _network.get_gau(p, i)) / ( 2 * _env.delta_gau) - 1.0 / 2.0 * log( 2 * 3.1415 * _env.delta_gau)  + .0;
-		for (uint32_t i = 0; i< _env.dbin; ++i)
-			v += 0.0;
+   			v += 0.0;
    	}
     //edits
     s += v;
@@ -1784,9 +1779,9 @@ FastAMM2::moving_heldout_likelihood(EdgeList &sample) const
     l = edge_likelihood(p,q,y);
     s += l;
     // edits
-    l = atrributes_likelihood(p);
+    l = attributes_likelihood(p);
     s += l;
-    l = atrributes_likelihood(q);
+    l = attributes_likelihood(q);
     s += l;
     // edits
     if (y == 1) {

@@ -282,15 +282,12 @@ private:
   double estimate_bernoulli_rate(uint32_t k) const;
 
   // edits
-  double attributes_likelihood(uint32_t p) const;
-  double attributes_likelihood(uint32_t p) const;
   double estimate_eta_gau(uint32_t i) const;
   double estimate_eta_bin(uint32_t i) const;
   double estimate_delta_gau(uint32_t i) const;
   double estimate_delta_bin(uint32_t i) const;
 
-  double atrributes_likelihood(uint32_t p) const;
-  bool atrributes_likelihood(uint32_t p) const;
+  double attributes_likelihood(uint32_t p) const;
   // edits
 
   void estimate_beta(Array &beta) const;
@@ -658,7 +655,7 @@ FastAMM2::edge_likelihood(uint32_t p, uint32_t q, yval_t y) const
 
 // edits: add attributes likelihood sky
 inline double
-FastAMM2::atrributes_likelihood(uint32_t p ) const
+FastAMM2::attributes_likelihood(uint32_t p ) const
 {
   Array pi_p(_k);
   estimate_pi(p, pi_p);
