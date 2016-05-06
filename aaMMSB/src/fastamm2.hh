@@ -23,9 +23,6 @@
 #include <gsl/gsl_sf_psi.h>
 #include <gsl/gsl_sf.h>
 
-//edits
-#include "math.h";
-//edits
 
 //#define TRAINING_SAMPLE 1
 #define COMPUTE_GROUPS 1
@@ -145,13 +142,13 @@ PhiCompute::update_phis(bool is_phi1, Eigen::MatrixXd _eta_gau, Eigen::MatrixXd 
 			  double exped = exp(to_exp);
 				w += (_net.get_gau(c, i) * eta_b_k) / (_env.n * _env.delta_bin)
 					- (eta_b_k * exped) / (exped * _env.delta_bin);
-	}
+			}
 
 //    }else if(_env.dgau == 0 & _env.dbin > 0){
 //    	v = .0; // TODO: update using only  binary local updates, eq. 53 & 54
 //    }else if(_env.dgau > 0 & _env.dbin > 0){
 //    	v = .0; // TODO: update using both binary and local updates, eq.36,37 & 53,54,
-//    }
+    }
     anext[k] = elogpid[c][k] + (_Elogf[k] * b[k]) + u + v + w;
     // Edits
 

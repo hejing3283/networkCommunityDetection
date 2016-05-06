@@ -2080,7 +2080,7 @@ MMSBInfer::approx_log_likelihood()
 			// TODO: @ sky, put the last term of gaussian likelihood instead of 0.0
 			v += (-1.0 *_network.get_gau(p, i) * _network.get_gau(p, i)) / ( 2 * _env.delta_gau) - 1.0 / 2.0 * log( 2 * 3.1415 * _env.delta_gau)  + .0;
 
-	}
+
     }
 
         //edits

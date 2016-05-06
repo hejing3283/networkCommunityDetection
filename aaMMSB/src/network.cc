@@ -181,10 +181,10 @@ Network::read_gau_attr(string s)
         exit(-1);
       }
       // Cast strings into correct types
-//      s1 = int(b1);
-//      s2 = int(b2);
-      s1 = _str2id[b1];
-      s2 = _str2id[b2];
+      s1 = int(b1);
+      s2 = int(b2);
+//      s1 = _str2id[b1];
+//      s2 = _str2id[b2];
       s3 = double(b3);
       // Updates matrix
       set_gau(s1, s2, s3);
@@ -216,10 +216,10 @@ Network::read_bin_attr(string s)
         exit(-1);
       }
       // Cast strings into correct types
-//      s1 = int(b1);
-//      s2 = int(b2);
-      s1 = _str2id(b1);
-      s2 = _str2id(b2);
+      s1 = int(b1);
+      s2 = int(b2);
+//      s1 = _str2id(b1);
+//      s2 = _str2id(b2);
       s3 = bool(b3);
       // Updates matrix
       set_bin(s1, s2, s3);
