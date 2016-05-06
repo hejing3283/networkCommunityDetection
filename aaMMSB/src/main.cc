@@ -229,8 +229,8 @@ main(int argc, char **argv)
   if (network.read_bin_attr(binfname.c_str()) < 0) {
         fprintf(stderr, "error reading %s; quitting\n", binfname.c_str());
         return -1;
-      }
-      info("+ binary attributes: dG = %d\n", network.dbin());
+   }
+   info("+ binary attributes: dG = %d\n", network.dbin());
   //edits
 
 
@@ -253,8 +253,12 @@ usage()
 	  "svinet [OPTIONS]\n"
 	  "\t-help\t\tusage\n\n"
 	  "\t-file <name>\tinput tab-separated file with a list of undirected links\n\n"
+	  "\t-fileGau <name>\tinput tab-separated file with a matrix of nodes and Gaussian attributes\n\n"
+      "\t-fileBin <name>\tinput tab-separated file with a matrix of nodes and Gaussian attributes\n\n"
 	  "\t-n <N>\t\tnumber of nodes in network\n\n"
 	  "\t-k <K>\t\tnumber of communities\n\n"
+	  "\t-dgau <dGau>\t\tnumber of gaussian attributes\n\n"
+	  "\t-dbin <dBin>\t\tnumber of binary attributes \n\n"
 	  "\t-batch\t\trun batch variational inference\n\n"
 	  "\t-stratified\tuse stratified sampling\n\t * use with rpair or rnode options\n\n"
 	  "\t-rnode\t\tinference using random node sampling\n\n"

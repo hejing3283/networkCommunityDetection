@@ -1,0 +1,40 @@
+nodes: 10
+groups: 3
+t: 2
+minibatch (rpair or stratified rpair options only): 5
+mbsize: 1
+alpha: 0.333333333
+sbm_alpha: 0.333333333
+heldout_ratio: 0.010000000
+precision_ratio: 0.001000000
+stratified: True
+delaylearn: True
+nolambda: False
+randomnode: True
+gen: False
+undirected: True
+gap: False
+nthreads: 0
+stopthresh: 0.000010000
+infthresh: 0.000000000
+randzeros: False
+benchmark: False
+max iterations: 0
+seed: 0.000000000
+use validation stop: True
+gamma location: 
+link_thresh: 0.500000000
+lt_min_deg: 0
+epsilon: 0.000000000
+sets_mini_batch: 0
+use_init_communities: False
+load_test_sets: False
+val_load: False
+val_file_location: 
+test_load: False
+test_file_location: 
+reportfreq: 100
+eta_type: uniform
+total pairs: 45
+ones_prob: 0.355555556
+zeros_prob: 0.644444444

@@ -33,22 +33,22 @@ Network::read(string s)
       StrMap::iterator r1 = _str2id.find(s1);
       StrMap::iterator r2 = _str2id.find(s2);
       if (r1 == _str2id.end()) {
-	_str2id[s1] = scurr;
-	_id2str[scurr] = s1;
-	scurr++;
+    	  _str2id[s1] = scurr;
+    	  _id2str[scurr] = s1;
+    	  scurr++;
       }
       id1 = _str2id[s1];
 
       if (r2 == _str2id.end()) {
-	_str2id[s2] = scurr;
-	_id2str[scurr]=s2;
-	scurr++;
+    	  _str2id[s2] = scurr;
+    	  _id2str[scurr]=s2;
+    	  scurr++;
       }
       id2 = _str2id[s2];
     } else {
       if (fscanf(f, "%d"DELIM"%d\n", &id1, &id2) < 0) {
-	printf("error: unexpected lines in file\n");
-	exit(-1);
+    	  printf("error: unexpected lines in file\n");
+    	  exit(-1);
       }
     }
 
@@ -74,9 +74,9 @@ Network::read(string s)
       _edges.push_back(e);
 
       if (p == e.first)
-	e.ftos = true;
+    	  e.ftos = true;
       else
-	e.ftos = false;
+    	  e.ftos = false;
 
       order_edge(_env, e);
       assert(_sparse_y[e.first]);
@@ -86,14 +86,14 @@ Network::read(string s)
       // todo: _deg only for undirected networks
       // use in_deg and out_deg for directed ones
       if (_env.undirected) {
-	_deg[p]++;
-	_deg[q]++;
+    	  _deg[p]++;
+    	  _deg[q]++;
       }
 
       _ones++; // must be same as those pushed into edges
       if (_ones % 10000 == 0) {
-	printf("\r+ %d entries", _ones);
-	fflush(stdout);
+    	  printf("\r+ %d entries", _ones);
+    	  fflush(stdout);
       }
     }
     debug("p = %d, q = %d, y = %d\n", p, q, y(p,q));
@@ -172,7 +172,7 @@ Network::read_gau_attr(string s)
   char b1, b2, b3;
   uint32_t s1, s2;
   double s3;
-
+  // assume the matrix is n * dGau ; n * dBin
   while (!feof(f)){
     // Checks if scan continues, refer to main
     if (_env.strid) {
@@ -181,8 +181,10 @@ Network::read_gau_attr(string s)
         exit(-1);
       }
       // Cast strings into correct types
-      s1 = int(b1);
-      s2 = int(b2);
+//      s1 = int(b1);
+//      s2 = int(b2);
+      s1 = _str2id[b1];
+      s2 = _str2id[b2];
       s3 = double(b3);
       // Updates matrix
       set_gau(s1, s2, s3);
@@ -214,8 +216,10 @@ Network::read_bin_attr(string s)
         exit(-1);
       }
       // Cast strings into correct types
-      s1 = int(b1);
-      s2 = int(b2);
+//      s1 = int(b1);
+//      s2 = int(b2);
+      s1 = _str2id(b1);
+      s2 = _str2id(b2);
       s3 = bool(b3);
       // Updates matrix
       set_bin(s1, s2, s3);
