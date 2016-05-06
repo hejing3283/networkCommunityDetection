@@ -105,6 +105,20 @@ private:
   Array _beta;
   Matrix _eta;
 
+  // Edits
+  // Additional private variables
+  uint32_t _gau;
+  uint32_t _bin;
+  Eigen::MatrixXd _eta_gau;
+  Eigen::MatrixXd _eta_bin;
+  double _delta_gau;
+  double _delta_bin;
+  // Additional private matrices
+  gauMatrix _gMatrix;
+  binMatrix _bMatrix;
+  // Edits
+
+
   double _ones_prob;
   double _zeros_prob;
   EdgeList _test_pairs;
