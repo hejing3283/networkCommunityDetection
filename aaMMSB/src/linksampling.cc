@@ -665,7 +665,7 @@ LinkSampling::infer()
 	    		phi[k] += (_network.get_gau(p, k) * _eta_gau[k])/(_delta_gau * _training_links.data()[k]);
 	    		}
 	    	// Add second term
-	    	phi[k] -= _gau * pow(_network.get_gau(p, k), 2)/(2 * _delta_gau * * _training_links.data()[k])
+	    	phi[k] -= _gau * pow(_network.get_gau(p, k), 2)/(2 * _delta_gau * _training_links.data()[k])
 	     }
 	    if (_bin > 0){
 	    	for (uint32_t i = 0; i < _bin; ++i){
@@ -835,7 +835,7 @@ LinkSampling::infer()
             if (i != 0 && j != 0){
               // To prevent overloading
               Eigen::MatrixXd t_1_g = _eta_gau.transpose() * _eigen_phi_bar.row(i);
-              Eigen::MatrixXd t_2_g = _eta_gau.transpose() * _eigen_phi_bar.row(i).asDiagonal() * _eta_gau;
+              Eigen::MatrixXd t_2_g = _eta_gau.transpose() * _eigen_phi_bar.row(i).asDiagonal() * _©eta_gau;
               gau_delta_gau_common += - pow(_network.get_gau(i, j),2) / (4 * pow(x[0], 2)) +
                                     (1.0/ pow(x[0], 2))  *
                                     (t_1_g(0,0) * _network.get_gau(i, j) - 0.5 * t_2_g(0,0));
