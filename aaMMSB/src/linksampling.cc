@@ -665,7 +665,7 @@ LinkSampling::infer()
 	    		phi[k] += (_network.get_gau(p, k) * _eta_gau[k])/(_delta_gau * _training_links.data()[k]);
 	    		}
 	    	// Add second term
-	    	phi[k] -= _gau * pow(_network.get_gau(p, k), 2)/(2 * _delta_gau * _training_links.data()[k])
+	    	phi[k] -= _gau * pow(_network.get_gau(p, k), 2)/(2 * _delta_gau * _training_links.data()[k]);
 	     }
 	    if (_bin > 0){
 	    	for (uint32_t i = 0; i < _bin; ++i){
@@ -673,10 +673,10 @@ LinkSampling::infer()
 	    	    phi[k] += (_network.get_bin(p, k) * _eta_bin[k])/(_delta_bin * _training_links.data()[k]);
 	    	    }
 	    	// Add second term
-	    	Eigen::MatrixXd phi_bar_a = Eigen::MatrixXi::Zero(_k, 1);
-	    	const double **mphi_to_use = _mphi.const_data();
+	    	Eigen::MatrixXd phi_bar_a = Eigen::MatrixXd::Zero(_k, 1);
+	    	double **mphi_to_use = _mphi.data();
 	    	for (uint32_t i = 0; i < _k; ++i){
-	    		phi_bar_a(k) = mphi_to_use[p][i];
+	    		phi_bar_a(k,1) = mphi_to_use[p][i];
 	    	}
 	    	double to_exp = _eta_bin.transpose() * phi_bar_a;
 	    	double exped = exp(to_exp);
