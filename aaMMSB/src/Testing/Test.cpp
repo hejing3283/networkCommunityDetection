@@ -1,10 +1,19 @@
 // #include <iostream>
 // #include <eigen3/Eigen/Core>
 // #include <vector>
-// #include "matrix.hh"
+// // #include "matrix.hh"
 
 // int main()
 // {
+//     Eigen::MatrixXd m(3,3);
+//     m << 1,2,3,
+//          4,5,6,
+//          7,8,9;
+
+//     for (uint32_t i = 0; i < 3; ++i){
+//         printf("%f ", m.row(1)(i));
+//     }
+
 
 //     uint32_t k = 3;
 //     const uint32_t _k = k;
@@ -95,6 +104,7 @@ int main(int argc, char **argv)
     minlbfgssetcond(state, epsg, epsf, epsx, maxits);
     alglib::minlbfgsoptimize(state, function1_grad);
     minlbfgsresults(state, x, rep);
+
 
     printf("%d\n", int(rep.terminationtype)); // EXPECTED: 4
     printf("%s\n", x.tostring(2).c_str()); // EXPECTED: [-3,3]
