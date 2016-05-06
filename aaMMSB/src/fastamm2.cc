@@ -1517,6 +1517,26 @@ FastAMM2::approx_log_likelihood()
     for (uint32_t k = 0; k < _k; ++k)
       v += (gd[p][k] - 1) * elogpid[p][k];
     s -= v;
+
+    //edits
+    v = .0;
+    if ( _env.dgau > 0 & _env.dbin == 0){
+   		for (uint32_t i = 0; i < _env.dgau; ++i)
+		// TODO: @ sky, put the last term of gaussian likelihood instead of 0.0
+   			v += (-1.0 *_network.get_gau(p, i) * _network.get_gau(p, i)) / ( 2 * _env.delta_gau) - 1.0 / 2.0 * log( 2 * 3.1415 * _env.delta_gau)  + .0;
+   	}else if(_env.dgau == 0 & _env.dbin > 0){
+		//TODO: @ sky, update using only  binary local updates, eq. 53 & 54
+		for (uint32_t i = 0; i< _env.dbin; ++i)
+			v += 0.0;
+   	}else if(_env.dgau > 0 & _env.dbin > 0){
+   		for (uint32_t i = 0; i < _env.dgau; ++i)
+   			// TODO: @ sky, put the last term of gaussian likelihood instead of 0.0
+   			v += (-1.0 *_network.get_gau(p, i) * _network.get_gau(p, i)) / ( 2 * _env.delta_gau) - 1.0 / 2.0 * log( 2 * 3.1415 * _env.delta_gau)  + .0;
+		for (uint32_t i = 0; i< _env.dbin; ++i)
+			v += 0.0;
+   	}
+    //edits
+    s += v;
   }
 
   info("approx. log likelihood = %f\n", s);
@@ -1858,7 +1878,12 @@ FastAMM2::training_likelihood()
     assert (p != q);
     yval_t y = _network.y(p,q);
     double u = edge_likelihood(p,q,y);
+    //edits: add attributes likelihood
+    u += attributes_likelihood()
+    //edits
+
     s += u;
+    // edits @ sky
     k += 1;
     if (y) {
       sones += u;
