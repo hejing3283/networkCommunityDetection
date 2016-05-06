@@ -1670,6 +1670,7 @@ FastAMM2::training_likelihood()
     yval_t y = _network.y(p,q);
     double u = edge_likelihood(p,q,y);
     s += u;
+    // edits @ sky
     k += 1;
     if (y) {
       sones += u;
