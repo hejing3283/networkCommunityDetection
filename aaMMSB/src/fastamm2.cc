@@ -1511,6 +1511,24 @@ FastAMM2::compute_precision(uint32_t &c10, uint32_t &c100,
     v[k++] = EdgeV(e,p1);
   }
 
+  //edits: TODO: compute likelihood for all attributes in precision set
+//  D1Array<double> vx(_precision_map.size());
+//  for (SampleMap::const_iterator i = _precision_map.begin();
+//         i != _precision_map.end(); ++i) {
+//
+//      const Edge &e = i->first;
+//      uint32_t p = e.first;
+//      uint32_t q = e.second;
+//      assert (p != q);
+//
+//      double u1 = attributes_likelihood(p);
+//      u1 += attributes_likelihood(q);
+//      double p1 = exp(u1);
+//      debug("prob. that pair is 1:%.5f\n", p1);
+//      v[k++] = EdgeV(e,p1);
+//    }
+//  //edits
+
   // rank the pairs in desc order of likelihood
   v.sort_by_value();
 
@@ -1696,7 +1714,7 @@ FastAMM2::training_likelihood()
     assert (p != q);
     yval_t y = _network.y(p,q);
     double u = edge_likelihood(p,q,y);
-    //edits: add attributes likelihood
+    //edits: add attributes likelihood: TODO some nodes got multiple times
     u += attributes_likelihood(p);
 	u += attributes_likelihood(q);
     //edits
