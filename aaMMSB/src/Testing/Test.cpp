@@ -71,6 +71,8 @@ void function1_grad(const real_1d_array &x, double &func, real_1d_array &grad, v
     // and its derivatives df/d0 and df/dx1
     //
     func = 100*pow(x[0]+3,4) + pow(x[1]-3,4);
+    for (uint32_t i = 2; i<5; ++i)
+      func += 100*pow(x[i]+3,4) + pow(x[i]-3,4);
     grad[0] = 400*pow(x[0]+3,3);
     grad[1] = 4*pow(x[1]-3,3);
 }
