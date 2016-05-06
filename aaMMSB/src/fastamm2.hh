@@ -277,6 +277,18 @@ private:
   double edge_likelihood(uint32_t p, uint32_t q, yval_t y) const;
   double estimate_bernoulli_rate(uint32_t k) const;
 
+  // edits
+  double attributes_likelihood(uint32_t p, uint32_t i, bool x) const;
+  double attributes_likelihood(uint32_t p, uint32_t i, double x) const;
+  double estimate_eta_gau(uint32_t i) const;
+  double estimate_eta_bin(uint32_t i) const;
+  double estimate_delta_gau(uint32_t i) const;
+  double estimate_delta_bin(uint32_t i) const;
+
+  double atrributes_likelihood(uint32_t p, uint32_t q, double x) const;
+  bool atrributes_likelihood(uint32_t p, uint32_t q, bool x) const;
+  // edits
+
   void estimate_beta(Array &beta) const;
   void estimate_pi(uint32_t p, Array &pi_p) const;
 
@@ -561,6 +573,33 @@ FastAMM2::estimate_bernoulli_rate(uint32_t k) const
   return ld[k][0] / s;
 }
 
+// edits: @ sky, add this eta_gau k * 1; delta is scalar
+inline double
+FastAMM2::estimate_eta_gau(uint32_t k) const
+{
+  const double ** const ld = _lambda.data();
+  double s = .0;
+  for (uint32_t t = 0; t < _t; ++t)
+    s += ld[k][t];
+  assert(s);
+  return ld[k][0] / s;
+}
+inline double
+FastAMM2::estimate_delta_gau(uint32_t k) const
+{
+  const double ** const ld = _lambda.data();
+  double s = .0;
+  for (uint32_t t = 0; t < _t; ++t)
+    s += ld[k][t];
+  assert(s);
+  return ld[k][0] / s;
+}
+// edits
+
+
+// edits: @ sky, add this
+
+
 inline void
 FastAMM2::estimate_beta(Array &beta) const
 {
@@ -607,6 +646,46 @@ FastAMM2::edge_likelihood(uint32_t p, uint32_t q, yval_t y) const
     }
     s += (1 - sum) * v;
   }
+  //assert(s > .0);
+  if (s < 1e-30)
+    s = 1e-30;
+  return log(s);
+}
+
+// edits: add attributes likelihood
+inline double
+FastAMM2::atrributes_likelihood(uint32_t p, uint32_t i, double x) const
+{
+  Array xp_i(_env.dgau);
+//  estimate_pi(p, pi_p);
+//  estimate_pi(q, pi_q);
+//
+//  double v = gsl_ran_bernoulli_pdf(0, _env.epsilon);
+//
+//  Array ones(_k);
+//  Array zeros(_k);
+//
+//  for (uint32_t i = 0; i < _k; ++i) {
+//    double u = estimate_bernoulli_rate(i);
+//    ones[i] = gsl_ran_bernoulli_pdf(1, u);
+//    zeros[i] = gsl_ran_bernoulli_pdf(0, u);
+//  }
+//
+//  debug("estimated x_i (%d) = %s\n", p, xp_i.s().c_str());
+//  debug("estimated pi (%d) = %s\n", q, pi_q.s().c_str());
+//
+  double s = .0;
+//  if (y == 1) {
+//    for (uint32_t z = 0; z < _k; ++z)
+//      s += pi_p[z] * pi_q[z] * ones[z];
+//  } else { // y == 0
+//    double sum = .0;
+//    for (uint32_t z = 0; z < _k; ++z) {
+//      s += pi_p[z] * pi_q[z] * zeros[z];
+//      sum += pi_p[z] * pi_q[z];
+//    }
+//    s += (1 - sum) * v;
+//  }
   //assert(s > .0);
   if (s < 1e-30)
     s = 1e-30;
