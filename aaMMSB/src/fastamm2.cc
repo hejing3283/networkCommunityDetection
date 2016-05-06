@@ -1174,6 +1174,7 @@ FastAMM2::opt_process(NodeMap &nodes,
         func_b += -t_2_exped * _network.get_bin(i, j) - t_2_el_bin;
       }
     }
+    // Invert as descent
     grad_b[0] = - grad_b[0] / x[1];
     func_b = - func_b / x[1];
     grad_b[1] = func_b / x[1];
