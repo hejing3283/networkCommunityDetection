@@ -678,8 +678,9 @@ LinkSampling::infer()
 	    	for (uint32_t i = 0; i < _k; ++i){
 	    		phi_bar_a(k,1) = mphi_to_use[p][i];
 	    	}
-	    	double to_exp = _eta_bin.transpose() * phi_bar_a;
-	    	double exped = exp(to_exp);
+		Eigen::MatrixXd to_exp = _eta_bin.transpose() * phi_bar_a;
+		/* double to_exp = to_exp(0,0); */
+	    	double exped = exp(to_exp(0,0));
 	    	phi[k] -= (_network.get_bin(p, k) * exped)/(_delta_bin * _training_links.data()[k] * (1+ exped));
 	    }
 	    // Edit
