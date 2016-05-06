@@ -1397,6 +1397,12 @@ FastAMM2::heldout_likelihood()
 
     double u = edge_likelihood(p,q,y);
     s += u;
+    //edits
+    u = attributes_likelihood(p);
+    s += u;
+    u = attributes_likelihood(q);
+    s += u;
+    //edits
     k += 1;
     if (y) {
       sones += u;
@@ -1562,6 +1568,12 @@ FastAMM2::validation_likelihood()
 
     yval_t y = _network.y(p,q);
     double u = edge_likelihood(p,q,y);
+
+    //edits
+    u += attributes_likelihood(p);
+    u += attributes_likelihood(q);
+    //edits
+
     s += u;
     k += 1;
     if (y) {
@@ -1690,7 +1702,8 @@ FastAMM2::training_likelihood()
     yval_t y = _network.y(p,q);
     double u = edge_likelihood(p,q,y);
     //edits: add attributes likelihood
-    u += attributes_likelihood()
+    u += attributes_likelihood(p);
+	u += attributes_likelihood(q);
     //edits
 
     s += u;
@@ -1770,6 +1783,12 @@ FastAMM2::moving_heldout_likelihood(EdgeList &sample) const
     double l = .0;
     l = edge_likelihood(p,q,y);
     s += l;
+    // edits
+    l = atrributes_likelihood(p);
+    s += l;
+    l = atrributes_likelihood(q);
+    s += l;
+    // edits
     if (y == 1) {
       lones += l;
       kones++;
