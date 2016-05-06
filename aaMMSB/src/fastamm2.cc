@@ -1,10 +1,13 @@
 /* Edit */
 #include <eigen3/Eigen/Core>
+#include "optimization.h"
 #include <math.h>
 /* Edit */
 #include "fastamm2.hh"
 #include "log.hh"
 #include <sys/time.h>
+
+using namespace alglib;
 
 int FastAMM2::ea = 0;
 int FastAMM2::eb = 0;
@@ -15,8 +18,10 @@ FastAMM2::FastAMM2(Env &env, Network &network)
    _t(env.t), _s(env.s), _m(10),
    // Edits
    _gau(env.dgau), _bin(env.dbin),
-   _eta_gau(env.eta_gau), _delta_gau(env.delta_gau),
+   _eta_gau(_k, 1), _delta_gau(env.delta_gau),
    _gMatrix(network.get_gauMatrix()), _bMatrix(network.get_binMatrix()),
+   _eigen_phi_bar(_n, _k),
+   _eta_bin(_k, 1), _delta_bin(env.delta_bin),
    // Edits
    _alpha(_k),
    _family(0), _prev_mbsize0(_s), _prev_mbsize1(_s),
@@ -550,6 +555,13 @@ FastAMM2::infer()
   s.tv_usec = 0;
 #endif
 
+// Edit
+// In case of required intialization
+// for (uint32_t i = 0; i < _n; ++i){
+//     for (uint32_t j = 0; j < _k; ++i){
+//       _eigen_phi_bar(i, j) = _gammat.data[i][j]
+// Edit
+
   while (1) {
 
     if (_env.max_iterations && _iter > _env.max_iterations) {
@@ -1009,10 +1021,6 @@ FastAMM2::opt_process(NodeMap &nodes,
 
       const Array &phi1 = _pcomp.phi1();
       const Array &phi2 = _pcomp.phi2();
-      // Edit
-      phi_sum.add_to(phi1);
-      phi_sum.add_to(phi2);
-      // Edit
 
       _gammat.add_slice(p, phi1);
       _gammat.add_slice(q, phi2);
@@ -1081,10 +1089,6 @@ FastAMM2::opt_process(NodeMap &nodes,
 
     const Array &phi1 = _pcomp.phi1();
     const Array &phi2 = _pcomp.phi2();
-    // Edit
-    phi_sum.add_to(phi1);
-    phi_sum.add_to(phi2);
-    // Edit
 
     _gammat.add_slice(p, phi1);
     _gammat.add_slice(q, phi2);
@@ -1102,17 +1106,15 @@ FastAMM2::opt_process(NodeMap &nodes,
 #endif
 
   // Edit
-
-
   // Calculate eta_gau
-  Eigen::MatrixXd eigen_phi_bar(_n, _k) ;
+  // Eigen::MatrixXd eigen_phi_bar(_n, _k) ;
   for (uint32_t i = 0; i < _n; ++i){
     for (uint32_t j = 0; j < _k; ++i){
       if (i == _start_node){
-        eigen_phi_bar(i, j) = _gammat[i][j] / normalize_size;
+        _eigen_phi_bar(i, j) = _gammat.data()[i][j] / normalize_size;
       }
       else{
-      eigen_phi_bar(i, j) = _gammat[i][j];
+      _eigen_phi_bar(i, j) = _gammat.data()[i][j];
       }
     }
   }
@@ -1120,7 +1122,7 @@ FastAMM2::opt_process(NodeMap &nodes,
   Eigen::MatrixXd eta_g_top = Eigen::MatrixXd::Zero(_k, 1);
   for (uint32_t i = 0; i < _n; ++i){
     for (uint32_t j = 0; j < _gau; ++j){
-      eta_g_top += _network.get_gau(i, j) * eigen_phi_bar(i, j);
+      eta_g_top += _network.get_gau(i, j) * _eigen_phi_bar(i, j);
     }
   }
 
@@ -1128,7 +1130,7 @@ FastAMM2::opt_process(NodeMap &nodes,
   Eigen::MatrixXd _gammat_invert = Eigen::MatrixXd::Zero(_n, _k);
   for (uint32_t i = 0; i < _n; ++i){
     for (uint32_t j = 0; j < _gau; ++j){
-      _gammat_invert(i, j) = 1.0 / eigen_phi_bar(i, j);
+      _gammat_invert(i, j) = 1.0 / _eigen_phi_bar(i, j);
     }
   }
 
@@ -1137,101 +1139,108 @@ FastAMM2::opt_process(NodeMap &nodes,
     eta_g_bot += _gau * _gammat_invert.row(i).asDiagonal();
   }
 
-  Eigen::MatrixXd eta_gau_temp(_k, 1);
-  eta_gau_temp = eta_g_bot * eta_g_top;
+  _eta_gau = eta_g_bot * eta_g_top;
   // Calculate eta_G
 
   // Create func_gau_delta to be passed into alglib
-  void func_gau_delta(const double &x, double &func_g_d, double &grad_d_g, void *ptr){
-    grad_d_g = _n * _gau * - 1.0/(2 * x);
-    grad_delta_gau_common; // TO DO: Not sure if this is right
+  void func_gau_delta(const real_1d_array &x, double &func_g_d, double &grad_d_g, void *ptr){
+    grad_d_g = _n * _gau * 1.0/(2 * x[0]);
+    Eigen::MatrixXd t_1_g = eta_gau.transpose() * _eigen_phi_bar.row(0);
+    Eigen::MatrixXd t_2_g = eta_gau.transpose() * _eigen_phi_bar.row(0).asDiagonal() * eta_gau;
+    grad_delta_gau_common = - pow(_network.get_gau(i, j),2) / (4 * pow(x[0], 2)) +
+                               (1.0 / pow(x[0], 2)) *
+                               (t_1_g(0,0) * _network.get_gau(i, j) - 0.5 * t_2_g(0,0));
     for (uint32_t i = 0; i < _n; ++i){
       for (uint32_t j = 0; j < _gau; ++j){
-          // To prevent overloading
-          Eigen::MatrixXd t_1_g = eta_gau_temp.transpose() * eigen_phi_bar.row(i);
-          Eigen::MatrixXd t_2_g = eta_gau_temp.transpose() * eigen_phi_bar.row(i).asDiagonal() * eta_gau_temp;
-          gau_delta_gau_common += pow(_network.get_gau(i, j),2) / (4 * pow(x, 2)) -
-                                  1.0/_delta_gau_squared *
+          if (i != 0 && j != 0){
+            // To prevent overloading
+            Eigen::MatrixXd t_1_g = eta_gau.transpose() * _eigen_phi_bar.row(i);
+            Eigen::MatrixXd t_2_g = eta_gau.transpose() * _eigen_phi_bar.row(i).asDiagonal() * eta_gau;
+            gau_delta_gau_common += - pow(_network.get_gau(i, j),2) / (4 * pow(x[0], 2)) +
+                                  (1.0/ pow(x[0], 2))  *
                                   (t_1_g(0,0) * _network.get_gau(i, j) - 0.5 * t_2_g(0,0));
+        }
       }
     }
     grad_d_g += grad_delta_gau_common;
-    // Invert as descent
-    grad_d_g = -grad_d_g
-    func_g_d = -(-0.5 * _n * _gau * log(2 * M_PI * x) + gau_delta_common);
+    func_g_d = 0.5 * _n * _gau * log(2 * M_PI * x[0]) - gau_delta_common;
   }
 
-  Create func_bin to be passed into alglib, optimize eta and delta
-  void func_bin(const Array &x, double &func_b, Array &grad_b, void *ptr){
-    grad_b[0];
-    funct_b; // TO DO: Not sure if this is right
-    for (uint32_t i = 0; i < _n; ++i){
-     for (uint32_t j = 0; j < _bin; ++j){
-        double t_2_exped = -(x[0].transpose() * eigen_phi_bar.row(i));
-        double t_2_eta_bin = eigen_phi_bar.row(i) / (1 + exp(t_2_exped));
-        double t_2_el_bin = log(1 + exp(-t_2_exped));
-        grad_b[0] += eigen_phi_bar.row(i) * _network.get_bin(i, j) - t_2_eta_bin;
-        func_b += -t_2_exped * _network.get_bin(i, j) - t_2_el_bin;
-      }
-    }
-    // Invert as descent
-    grad_b[0] = - grad_b[0] / x[1];
-    func_b = - func_b / x[1];
-    grad_b[1] = func_b / x[1];
-  }
-
-  // // Calculate grad_delta_gau
-  // // double grad_delta_gau = 0;
-  // double grad_delta_gau_common = 0;
-  // double _delta_gau_squared = pow(_delta_gau, 2);
-  // // To prevent overloading
-  // Eigen::MatrixXd t_1_g = eta_gau_temp.transpose() * eigen_phi_bar;
-  // Eigen::MatrixXd t_2_g = eta_gau_temp.transpose() * eigen_phi_bar.asDiagonal() * eta_gau_temp;
-  // for (uint32_t i = 0; i < _n; ++i){
-  //   for (uint32_t j = 0; j < _gau; ++j){
-  // //      grad_delta_gau += - (double) 1.0/(2 * _delta_gau);
-  //     grad_delta_gau_common += pow(_network.get_gau(i, j),2) / (4 * _delta_gau_squared) -
-  //                        (double) 1.0/_delta_gau_squared *
-  //                  (t_1_g(0,0) * _network.get_gau(i, j) - 0.5 * t_2_g(0,0));
+  // // Create func_bin to be passed into alglib, optimize eta
+  // void func_bin_eta(const real_1d_array &x, double &func_b, double &grad_b, void *ptr){
+  //   real_1d_array eigen_phi_bar_row;
+  //   eigen_phi_bar_row.setlength(_k);
+  //   for (uint32_t i = 0; i < _k; ++i){
+  //     eigen_phi_bar_row[i] = _eigen_phi_bar.row(0)(i);
   //   }
+  //   double t_2_exped = -(vdotproduct(x[0], eigen_phi_bar_row[0], 1));
+  //   double t_2_eta_bin = vmul(eigen_phi_bar_row[0], 1, 1.0 / (1 + exp(t_2_exped));
+  //   double t_2_el_bin = log(1 + exp(-t_2_exped));
+  //   grad_b[0] = -vmul(eigen_phi_bar_row[0], 1, _network.get_bin(0, 0)) + t_2_eta_bin;
+  //   func_b = -vmul(t_2_exped, 1, _network.get_bin(0, 0)) + t_2_el_bin;
+  //   for (uint32_t i = 0; i < _n; ++i){
+  //    for (uint32_t j = 0; j < _bin; ++j){
+  //       if (i != 0 && j != 0){
+  //         for (uint32_t l = 0; l < _k; ++l){
+  //           eigen_phi_bar_row[i] = _eigen_phi_bar.row(i)(l);
+  //         }
+  //         double t_2_exped = -(vdotproduct(x[0], eigen_phi_bar_row[0], 1));
+  //         double t_2_eta_bin = vmul(eigen_phi_bar_row[0], 1, 1.0 / (1 + exp(t_2_exped));
+  //         double t_2_el_bin = log(1 + exp(-t_2_exped));
+  //         grad_b[0] += -vmul(eigen_phi_bar_row[0], 1, _network.get_bin(0, 0)) + t_2_eta_bin;
+  //         func_b += -vmul(t_2_exped, 1, _network.get_bin(0, 0)) + t_2_el_bin;
+  //       }
+  //     }
+  //   }
+  //   grad_b = grad_b / _delta_bin;
+  //   func_b = func_b / x[1];
   // }
-  // // Add common terms
-  // double grad_delta_gau = _n * _gau* - (double) 1.0/(2 * _delta_gau) + grad_delta_gau_common;
-  // // Calculate grad_delta_gau
 
-  // // Calculate el_gau
-  // double el_gau = -0.5 * _n * _gau * log(2 * M_PI * _delta_gau) + grad_delta_gau_common;
-  // // Calculate el_gau
+  // void func_bin_delta(const real_1d_array &x, double &func_b, double &grad_b, void *ptr){
+  //   double t_2_exped = -(_eta_bin.transpose() * _eigen_phi_bar.row(0));
+  //   double t_2_el_bin = log(1 + exp(-t_2_exped));
+  //   func_b = -t_2_exped * _network.get_bin(i, j) + t_2_el_bin;
+  //   for (uint32_t i = 0; i < _n; ++i){
+  //    for (uint32_t j = 0; j < _bin; ++j){
+  //       if (i != 0 && j != 0){
+  //         double t_2_exped = -(_eta_bin.transpose() * _eigen_phi_bar.row(i));
+  //         double t_2_el_bin = log(1 + exp(-t_2_exped));
+  //         func_b += -t_2_exped * _network.get_bin(i, j) + t_2_el_bin;
+  //       }
+  //     }
+  //   }
+  //   func_b = func_b / x[0];
+  //   grad_b_delta = func_b / x[0]
+  // }
 
-//  // Calculate grad_eta_bin
-//  double grad_eta_bin = 0;
-//  double t_2_exped = -(eta_bin.transpose() * eigen_phi_bar);
-//  double t_2_eta_bin = eigen_phi_bar / (1 + exp(t_2_exped));
-//  for (uint32_t i = 0; i < _n; ++i){
-//      for (uint32_t j = 0; j < _bin; ++j){
-//        grad_eta_bin += eigen_phi_bar * _network.get_bin(i, j) - t_2_eta_bin;
-//      }
-//  }
-//  grad_eta_bin /= _delta_bin;
-//  // Calculate grad_eta_bin
-//
-//  // Calculate el_bin
-//  double el_bin = 0;
-//  double t_1_el_bin = -t_2_exped;
-//  double t_2_el_bin = -log(1 + exp(t_1_el_bin));
-//  for (uint32_t i = 0; i < _n; ++i){
-//    for (uint32_t j = 0; j < _bin; ++j){
-//      grad_eta_bin += t_1_el_bin * _network.get_bin(i, j) + t_2_el_bin;
-//    }
-//  }
-//  el_bin /= _delta_bin;
-//  // Calculate el_bin
-//
-//  // Calculate grad_delta_bin
-//  double grad_delta_bin = el_bin / _delta_bin;
-//  // Calculate grad_delta_bin
+  // TO DO: Run L-BFGS
+  if (_iter == 1){
+    real_1d_array x_g_d;
+    x_g_d.setcontent(1, _delta_gau);
+    double epsg = 0.0000000001;
+    double epsf = 0;
+    double epsx = 0;
+    ae_int_t maxits = 0;
+    minlbfgsstate state;
+    minlbfgsreport rep;
 
+    minlbfgscreate(1, x_g_d, state);
+    minlbfgssetcond(state, epsg, epsf, epsx, maxits);
+    alglib::minlbfgsoptimize(state, function_gau_delta);
+    minlbfgsresults(state, x_g_d, rep);
+
+    _delta_gau = &x_g_d.getcontent();
+  }
+  else {
+    x_g_d.setcontent(1, _delta_gau);
+    minlbfgsrestartfrom(state, x_g_d);
+    alglib::minlbfgsoptimize(state, function1_gau_delta);
+    minlbfgsresults(state, x_g_d, rep);
+
+    _delta_gau = &x_g_d.getcontent();
+  }
   // Edit
+  }
 }
 
 void
@@ -1333,7 +1342,7 @@ FastAMM2::opt_process_noninf(NodeMap &nodes,
 
     for (uint32_t k = 0; k < _k; ++k)
       for (uint32_t t = 0; t < _t; ++t)
-	ldt[k][t] += phi1[k] * phi2[k] * (t == 0 ? y : (1-y));
+	       ldt[k][t] += phi1[k] * phi2[k] * (t == 0 ? y : (1-y));
   }
   // Edit
 
@@ -1586,7 +1595,7 @@ FastAMM2::heldout_likelihood()
   fflush(_hf);
 
   // Use hol @ network sparsity as stopping criteria
-  double a = nshol;
+  double a = nshol + attribute_likelihood(_eigen_phi_bar, _eta_gau, _delta_gau);
 
   bool stop = false;
   int why = -1;
@@ -1860,6 +1869,7 @@ FastAMM2::training_likelihood()
     double u = edge_likelihood(p,q,y);
     s += u;
     k += 1;
+    // And attribute likelihood
     if (y) {
       sones += u;
       kones++;

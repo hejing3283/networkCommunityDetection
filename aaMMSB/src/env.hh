@@ -17,6 +17,10 @@
 #include "matrix.hh"
 #include "log.hh"
 
+// Edit
+#include <eigen3/Eigen/Core>
+// Edit
+
 typedef uint8_t yval_t;
 
 typedef D2Array<yval_t> AdjMatrix;
@@ -126,17 +130,9 @@ public:
 
   //edit: parameters for GLM
   double delta_bin;
-  double sbm_delta_bin;
-  double infer_delta_bin;
-  std::vector<double> eta_bin;
-  std::vector<double> sbm_eta_bin;
-  std::vector<double> infer_eta_bin;
+  Eigen::MatrixXd eta_bin;
   double delta_gau;
-  double sbm_delta_gau;
-  double infer_delta_gau;
-  std::vector<double> eta_gau;
-  std::vector<double> sbm_eta_gau;
-  std::vector<double> infer_eta_gau;
+  Eigen::MatrixXd eta_gau;
   //edit
 
   double eta0;
