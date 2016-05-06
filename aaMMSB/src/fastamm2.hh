@@ -18,6 +18,10 @@
 #include <gsl/gsl_sf_psi.h>
 #include <gsl/gsl_sf.h>
 
+//edits
+#include "math.h";
+//edits
+
 //#define TRAINING_SAMPLE 1
 #define COMPUTE_GROUPS 1
 //#define EGO_NETWORK 1
@@ -278,15 +282,12 @@ private:
   double estimate_bernoulli_rate(uint32_t k) const;
 
   // edits
-  double attributes_likelihood(uint32_t p, uint32_t i, bool x) const;
-  double attributes_likelihood(uint32_t p, uint32_t i, double x) const;
   double estimate_eta_gau(uint32_t i) const;
   double estimate_eta_bin(uint32_t i) const;
   double estimate_delta_gau(uint32_t i) const;
   double estimate_delta_bin(uint32_t i) const;
 
-  double atrributes_likelihood(uint32_t p, uint32_t q, double x) const;
-  bool atrributes_likelihood(uint32_t p, uint32_t q, bool x) const;
+  double attributes_likelihood(uint32_t p) const;
   // edits
 
   void estimate_beta(Array &beta) const;
@@ -653,48 +654,55 @@ FastAMM2::edge_likelihood(uint32_t p, uint32_t q, yval_t y) const
 
 // edits: add attributes likelihood sky
 inline double
-FastAMM2::atrributes_likelihood(uint32_t p, uint32_t i, double x) const
+FastAMM2::attributes_likelihood(uint32_t p ) const
 {
-  Array xp_i(_env.dgau);
-  double u = .0
-  if(_env.dgau > 0){
-	  for ( uint32_t i; i < _env.dgau; ++i){
-		  // equation 60
+  Array pi_p(_k);
+  estimate_pi(p, pi_p);
+  double v = gsl_ran_bernoulli_pdf(0, _env.epsilon);
+  Array ones(_k);
+  Array zeros(_k);
+  for (uint32_t i = 0; i < _k; ++i) {
+    double u = estimate_bernoulli_rate(i);
+    ones[i] = gsl_ran_bernoulli_pdf(1, u);
+    zeros[i] = gsl_ran_bernoulli_pdf(0, u);
+  }
+  // TODO: need to compute \bar{z_n};
+  double s = .0;
+  double u = .0;
+  const double PI = 3.1415;
+  if ( _env.dgau > 0 ) {
+	  for (uint32_t i = 0; i < _env.dgau; ++i){
+		  u += -1.0/2.0 * log(2*PI*_env.delta_gau);
+		  double uu = .0;
+		  uu += -1 * _network.get_gau(p,i) * _network.get_gau(p,i) / 2.0;
+		  for ( uint32_t k = 0; k < _k; ++k)
+		   uu +=  pi_p[k] * ones[k] ; // TODO: double check x_{n,i} * \eta^T * \bar{z}_n dimension;
+		  uu += uu * _network.get_gau(p,i);
+		  for ( uint32_t k = 0; k < _k; ++k)
+			  uu +=  _env.eta_gau[k] * zeros[k] * ones[k] * _env.eta_gau[k] ; // TODO: double check \eta^T * z * z^T * \eta;
+		  u += uu / _env.delta_gau;
 	  }
   }
-//  estimate_pi(p, pi_p);
-//  estimate_pi(q, pi_q);
-//
-//  double v = gsl_ran_bernoulli_pdf(0, _env.epsilon);
-//
-//  Array ones(_k);
-//  Array zeros(_k);
-//
-//  for (uint32_t i = 0; i < _k; ++i) {
-//    double u = estimate_bernoulli_rate(i);
-//    ones[i] = gsl_ran_bernoulli_pdf(1, u);
-//    zeros[i] = gsl_ran_bernoulli_pdf(0, u);
-//  }
-//
-//  debug("estimated x_i (%d) = %s\n", p, xp_i.s().c_str());
-//  debug("estimated pi (%d) = %s\n", q, pi_q.s().c_str());
-//
-  double s = .0;
-//  if (y == 1) {
-//    for (uint32_t z = 0; z < _k; ++z)
-//      s += pi_p[z] * pi_q[z] * ones[z];
-//  } else { // y == 0
-//    double sum = .0;
-//    for (uint32_t z = 0; z < _k; ++z) {
-//      s += pi_p[z] * pi_q[z] * zeros[z];
-//      sum += pi_p[z] * pi_q[z];
-//    }
-//    s += (1 - sum) * v;
-//  }
-  //assert(s > .0);
+  s = u;
+  u = .0;
+  if (_env.dbin > 0){
+	  for (uint32_t i = 0; i < _env.dbin; ++i){
+	 		  u += -1.0/2.0 * log(2*PI*_env.delta_gau);
+	 		  double uu = .0;
+	 		  uu += -1 * _network.get_bin(p,i) * _network.get_bin(p,i) / 2.0;
+	 		  for ( uint32_t k = 0; k < _k; ++k)
+	 		   uu +=  pi_p[k] * ones[k] ; // TODO: double check x_{n,i} * \eta^T * \bar{z}_n dimension;
+	 		  uu += uu * _network.get_bin(p,i);
+	 		  for ( uint32_t k = 0; k < _k; ++k)
+	 			  uu +=  _env.eta_bin[k] * zeros[k] * ones[k] * _env.eta_bin[k] ; // TODO: double check \eta^T * z * z^T * \eta;
+	 		  u += uu / _env.delta_bin;
+	 	  }
+  }
+  s += u;
+  assert(s > .0);
   if (s < 1e-30)
     s = 1e-30;
-  return log(s);
+  return s;
 }
 
 // assumes edge is an ordered pair: (a,b) s.t. a < b
