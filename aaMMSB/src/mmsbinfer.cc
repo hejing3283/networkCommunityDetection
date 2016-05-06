@@ -1,6 +1,7 @@
 #include "mmsbinfer.hh"
 #include "log.hh"
 #include <sys/time.h>
+#include <math.h>
 
 int MMSBInfer::ea = 0;
 int MMSBInfer::eb = 0;
@@ -8,7 +9,11 @@ int MMSBInfer::eb = 0;
 MMSBInfer::MMSBInfer(Env &env, Network &network)
   :_env(env), _network(network),
    _n(env.n), _k(env.k),
-   _t(env.t), _s(env.s),
+   _t(env.t),
+   //edits
+   _dgau(env.dgau), _dbin(env.dbin),
+   //edits
+   _s(env.s),
    _alpha(_k),
    _family(0), _prev_mbsize0(_s), _prev_mbsize1(_s),
    _eta(_k,_t),
@@ -24,7 +29,11 @@ MMSBInfer::MMSBInfer(Env &env, Network &network)
    _gammat(_n,_k), _szgammat(_n,_k),
    _lambdat(_k,_t), _count(_n),
    _Elogf(_k),
-   _pcomp(env, _iter, _n, _k, _t, 0, 0, 0,
+   _pcomp(env, _iter, _n, _k, _t,
+		   //edits
+		   _dgau, _dbin,
+		   //edits
+		   0, 0, 0,
 	  _Elogpi, _Elogbeta, _Elogf),
    _nthreads(env.nthreads),
    _delaylearn_reported(false),
@@ -402,6 +411,9 @@ MMSBInfer::start_threads()
   for (uint32_t i = 0; i < _nthreads; ++i) {
     PhiRunner *t = new PhiRunner(_env, _network,
 				 _iter, _n, _k, _t,
+				 //edits
+				 _dgau, _dbin,
+				 //edits
 				 _family,
 				 _Elogpi, _Elogbeta,
 				 _out_q, _in_q,
@@ -2053,6 +2065,25 @@ MMSBInfer::approx_log_likelihood()
     for (uint32_t k = 0; k < _k; ++k)
       v += (gd[p][k] - 1) * elogpid[p][k];
     s -= v;
+
+    //edits
+    v = .0;
+    if ( _dgau > 0 & _dbin == 0){
+		for (uint32_t i = 0; i < _dgau; ++i)
+			// TODO: @ sky, put the last term of gaussian likelihood instead of 0.0
+			v += (-1.0 *_network.get_gau(p, i) * _network.get_gau(p, i)) / ( 2 * _env.delta_gau) - 1.0 / 2.0 * log( 2 * 3.1415 * _env.delta_gau)  + .0;
+
+	}else if(_env.dgau == 0 & _env.dbin > 0){
+					v = .0; // TODO: update using only  binary local updates, eq. 53 & 54
+	}else if(_env.dgau > 0 & _env.dbin > 0){
+		for (uint32_t i = 0; i < _dgau; ++i)
+			// TODO: @ sky, put the last term of gaussian likelihood instead of 0.0
+			v += (-1.0 *_network.get_gau(p, i) * _network.get_gau(p, i)) / ( 2 * _env.delta_gau) - 1.0 / 2.0 * log( 2 * 3.1415 * _env.delta_gau)  + .0;
+
+	}
+    }
+
+        //edits
   }
 
   printf("approx. log likelihood = %f\n", s);

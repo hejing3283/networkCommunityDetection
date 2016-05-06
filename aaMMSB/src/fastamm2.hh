@@ -7,6 +7,11 @@
 #include <stdio.h>
 #include <stdint.h>
 
+// Edit
+#include <eigen3/Eigen/Core>
+#include <math.h>
+// Edit
+
 #include "env.hh"
 #include "matrix.hh"
 #include "network.hh"
@@ -61,7 +66,7 @@ public:
   uint32_t iter() const { return _iter; }
 
   void update_phis_until_conv();
-  void update_phis(bool is_phi1);
+  void update_phis(bool is_phi1, Eigen::MatrixXd _eta_gau, Eigen::MatrixXd _eta_bin, Eigen::MatrixXd _eigen_phi_bar);
   static void compute_Elogf(uint32_t p, uint32_t q, yval_t y,
 			    uint32_t K, uint32_t T,
 			    const Matrix &Elogbeta, Array &Elogf);
@@ -110,14 +115,14 @@ PhiCompute::reset(uint32_t p, uint32_t q, yval_t y, bool phifix)
 }
 
 inline void
-PhiCompute::update_phis(bool is_phi1)
+PhiCompute::update_phis(bool is_phi1, Eigen::MatrixXd _eta_gau, Eigen::MatrixXd _eta_bin, Eigen::MatrixXd _eigen_phi_bar)
 {
   Array &b = is_phi1 ? _phi2 : _phi1;
   Array &anext = is_phi1 ? _phinext1 : _phinext2;
   uint32_t c = is_phi1 ? _p : _q;
 
   for (uint32_t k = 0; k < _k; ++k) {
-    double u = .0;
+	double u = .0;
     if (_y == 1)
       u = (1 - b[k]) * _env.logepsilon;
     const double ** const elogpid = _Elogpi.const_data();
@@ -125,21 +130,31 @@ PhiCompute::update_phis(bool is_phi1)
     // Edits
 	// TODO: add slots for binary x.check dgau, dbin to make this happen
     double v = .0;
-    double eta_k = _env.eta_gau[k];
-    if ( _env.dgau > 0 & _env.dbin == 0){
+    double w = .0;
+    double eta_g_k = _eta_gau(_k, 1);
+    if ( _env.dgau > 0){
 		for (uint32_t i = 0; i < _env.dgau; ++i) {
-		  v += (_net.get_gau(c, i) * eta_k) / (_env.n * _env.delta_gau)
-				- (eta_k * eta_k) / (2.0 * _env.n * _env.delta_gau);
-		}
+		  v += (_net.get_gau(c, i) * eta_g_k) / (_env.n * _env.delta_gau)
+				- (eta_g_k * eta_g_k) / (2.0 * _env.n * _env.delta_gau);
+	}
 
-    }else if(_env.dgau == 0 & _env.dbin > 0){
-    	v = .0; // TODO: update using only  binary local updates, eq. 53 & 54
-    }else if(_env.dgau > 0 & _env.dbin > 0){
-    	v = .0; // TODO: update using both binary and local updates, eq.36,37 & 53,54,
-    }
-    anext[k] = elogpid[c][k] + (_Elogf[k] * b[k]) + u + v;
+	double eta_b_k = _eta_bin(_k, 1);
+	if ( _env.dbin > 0){
+			for (uint32_t i = 0; i < _env.dbin; ++i) {
+			  double to_exp = _eta_bin.transpose() * _eigen_phi_bar.row(i);
+			  double exped = exp(to_exp);
+				w += (_net.get_gau(c, i) * eta_b_k) / (_env.n * _env.delta_bin)
+					- (eta_b_k * exped) / (exped * _env.delta_bin);
+	}
 
+//    }else if(_env.dgau == 0 & _env.dbin > 0){
+//    	v = .0; // TODO: update using only  binary local updates, eq. 53 & 54
+//    }else if(_env.dgau > 0 & _env.dbin > 0){
+//    	v = .0; // TODO: update using both binary and local updates, eq.36,37 & 53,54,
+//    }
+    anext[k] = elogpid[c][k] + (_Elogf[k] * b[k]) + u + v + w;
     // Edits
+
   }
   anext.lognormalize();
 
@@ -198,8 +213,8 @@ PhiCompute::update_phis_until_conv()
       debug("_phi1old = %s", _phi1old.s().c_str());
       debug("_phi2old = %s", _phi2old.s().c_str());
     }
-    update_phis(true);
-    update_phis(false);
+    update_phis(true, _eta_gau, _eta_bin, _eigen_phi_bar);
+    update_phis(false, _eta_gau, _eta_bin, _eigen_phi_bar);
 
     debug("_phinext1 = %s", _phinext1.s().c_str());
     debug("_phinext2 = %s", _phinext2.s().c_str());
@@ -279,6 +294,9 @@ private:
   void moving_heldout_likelihood(EdgeList &sample) const;
 
   double edge_likelihood(uint32_t p, uint32_t q, yval_t y) const;
+  // Edit
+  double attribute_likelihood(Eigen::MatrixXd _eigen_phi_bar, Eigen::MatrixXd _eta_gau, double _delta_gau) const;
+  // Edit
   double estimate_bernoulli_rate(uint32_t k) const;
 
   // edits
@@ -354,7 +372,6 @@ private:
 
   uint64_t _n;
   uint32_t _k;
-  const uint32_t _const_k;
   uint32_t _t;
   uint32_t _s;
   uint64_t _m;
@@ -366,8 +383,8 @@ private:
   // Additional private variables
   uint32_t _gau;
   uint32_t _bin;
-  std::vector<double> _eta_gau;
-  std::vector<double> _eta_bin;
+  Eigen::MatrixXd _eta_gau;
+  Eigen::MatrixXd _eta_bin;
   double _delta_gau;
   // Additional private matrices
   gauMatrix _gMatrix;
@@ -419,6 +436,9 @@ private:
 #endif
 
   Matrix _gammat;
+  // Edit
+  Eigen::MatrixXd _eigen_phi_bar;
+  // Edit
   Matrix _lambdat;
   Array _count;
 
@@ -612,6 +632,48 @@ FastAMM2::estimate_beta(Array &beta) const
     beta[k] = ld[k][0] / s;
   }
 }
+
+// Edit
+inline double
+FastAMM2::attribute_likelihood_gau(Eigen::MatrixXd _eigen_phi_bar, Eigen::MatrixXd _eta_gau, double _delta_gau) const
+{
+  double a_l = 0.5 * _n * _gau * log(2 * M_PI * _delta_gau);
+  Eigen::MatrixXd z_n = Eigen::MatrixXd::Zero(_k, 1);
+  for (uint32_t i = 0; i < _n; ++i){
+	  z_n += _eigen_phi_bar.row(i) / _n;
+  }
+  double a_l_acc = 0;
+  for (uint32_t i = 0; i < _n; ++i){
+      for (uint32_t j = 0; j < _gau; ++j){
+        double x = _network.get_gau(i, j);
+        double t_1 = _eta_gau.transpose() * z_n;
+        double t_2 = _eta_gau.transpose() * z_n * z_n.transpose() * _eta_gau;
+        a_l_acc += -pow(x, 2)/2 + x * t_1 - t_2/2;
+    }
+  }
+  return (a_l + a_l_acc/_delta_gau) ;
+}
+
+inline double
+FastAMM2::attribute_likelihood_bin(Eigen::MatrixXd _eigen_phi_bar, Eigen::MatrixXd _eta_gau, double _delta_gau) const
+{
+  double a_l = 0.5 * _n * _gau * log(2 * M_PI * _delta_gau);
+  Eigen::MatrixXd z_n = Eigen::MatrixXd::Zero(_k, 1);
+  for (uint32_t i = 0; i < _n; ++i){
+    z_n += _eigen_phi_bar.row(i) / _n;
+  }
+  double a_l_acc = 0;
+  for (uint32_t i = 0; i < _n; ++i){
+      for (uint32_t j = 0; j < _gau; ++j){
+        double x = _network.get_gau(i, j);
+        double t_1 = _eta_gau.transpose() * z_n;
+        double t_2 = _eta_gau.transpose() * z_n * z_n.transpose() * _eta_gau;
+        a_l_acc += -pow(x, 2)/2 + x * t_1 - t_2/2;
+    }
+  }
+  return (a_l + a_l_acc/_delta_gau) ;
+}
+// Edit
 
 inline double
 FastAMM2::edge_likelihood(uint32_t p, uint32_t q, yval_t y) const
