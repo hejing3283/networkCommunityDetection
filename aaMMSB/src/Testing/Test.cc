@@ -1,3 +1,7 @@
+#include "network.hh"
+#include "log.hh"
+#include <stdio.h>
+
 #include <fstream>
 #include <vector>
 #include <string>
@@ -5,6 +9,7 @@
 #include <algorithm>
 #include <iterator>
 #include <iostream>
+
 #include "matrix.h"
 
 typedef std::vector<int> IntVector;
@@ -15,20 +20,6 @@ typedef std::vector<DoubleVector> DoubleVector2D;
 
 using namespace std;
 
-int ApplyRand(int num)
-{ return num + rand() - RAND_MAX/2; }
-
-void OutputMatrix(const IntVector2D& m)
-{
-    cout << "\n";
-    IntVector2D::const_iterator it = m.begin();
-    while (it != m.end())
-    {
-        copy(it->begin(), it->end(), ostream_iterator<int>(cout, " "));
-        cout << "\n";
-        ++it;
-    }
-}
 
 void OutputMatrix(const DoubleVector& m)
 {
