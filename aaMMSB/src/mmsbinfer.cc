@@ -8,7 +8,11 @@ int MMSBInfer::eb = 0;
 MMSBInfer::MMSBInfer(Env &env, Network &network)
   :_env(env), _network(network),
    _n(env.n), _k(env.k),
-   _t(env.t), _s(env.s),
+   _t(env.t),
+   //edits
+   _dgau(env.dgau), _dbin(env.dbin),
+   //edits
+   _s(env.s),
    _alpha(_k),
    _family(0), _prev_mbsize0(_s), _prev_mbsize1(_s),
    _eta(_k,_t),
@@ -24,7 +28,11 @@ MMSBInfer::MMSBInfer(Env &env, Network &network)
    _gammat(_n,_k), _szgammat(_n,_k),
    _lambdat(_k,_t), _count(_n),
    _Elogf(_k),
-   _pcomp(env, _iter, _n, _k, _t, 0, 0, 0,
+   _pcomp(env, _iter, _n, _k, _t,
+		   //edits
+		   _dgau, _dbin,
+		   //edits
+		   0, 0, 0,
 	  _Elogpi, _Elogbeta, _Elogf),
    _nthreads(env.nthreads),
    _delaylearn_reported(false),
@@ -402,6 +410,9 @@ MMSBInfer::start_threads()
   for (uint32_t i = 0; i < _nthreads; ++i) {
     PhiRunner *t = new PhiRunner(_env, _network,
 				 _iter, _n, _k, _t,
+				 //edits
+				 _dgau, _dbin,
+				 //edits
 				 _family,
 				 _Elogpi, _Elogbeta,
 				 _out_q, _in_q,
