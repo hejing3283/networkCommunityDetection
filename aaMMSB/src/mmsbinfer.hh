@@ -26,12 +26,17 @@ class PhiComp {
 public:
   PhiComp(const Env &env, const uint32_t &iter,
 	  uint32_t n, uint32_t k, uint32_t t,
+	  //edits
+	  uint32_t dg, uint32_t db,
 	  uint32_t p, uint32_t q, yval_t y,
 	  const Matrix &Elogpi, 
 	  const Matrix &Elogbeta,
 	  Array &Elogf, bool phifix = false)
     : _env(env), _iter(iter),
       _n(n), _k(k), _t(t), 
+	  //edits
+	  _dgau(dg),_dbin(db),
+	  //edits
       _p(p), _q(q), _y(y),
       _Elogpi(Elogpi), _Elogbeta(Elogbeta),
       _Elogf(Elogf),
@@ -69,7 +74,10 @@ private:
   uint32_t _n;
   uint32_t _k;
   uint32_t _t;
-
+  //edits
+  uint32_t _dgau;
+  uint32_t _dbin;
+  //edits
   uint32_t _p;
   uint32_t _q;
   yval_t _y;
@@ -247,6 +255,9 @@ public:
   PhiRunner(const Env &env, Network &network, 
 	    const uint32_t &iter,
 	    uint32_t n, uint32_t k, uint32_t t,
+		//edits
+		uint32_t dg, uint32_t db,
+		//edits
 	    yval_t family,
 	    const Matrix &Elogpi, 
 	    const Matrix &Elogbeta,
@@ -256,9 +267,15 @@ public:
     :_env(env),
      _network(network),
      _n(n), _k(k), _t(t),
+	 //edits
+	 _dgau(dg),_dbin(db),
+	 //edits
      _family(family),
      _Elogf(k),
-     _pcomp(env, iter, n, k, t, 
+	 _pcomp(env, iter, n, k, t,
+			 //edits
+			 dg, db,
+			 //edits
 	    0, 0, 0,
 	    Elogpi, Elogbeta, _Elogf),
      _gammat(n,k), 
@@ -296,6 +313,11 @@ private:
   uint32_t _t;
   yval_t _family;
 
+  //edits
+  uint32_t _dgau;
+  uint32_t _dbin;
+
+  //edits
   Array _Elogf;
   PhiComp _pcomp;
 
@@ -437,6 +459,12 @@ private:
   uint32_t _iter;
   uint32_t _lambda_start_iter;
   Array _alpha;
+
+  //edits
+  uint32_t _dgau;
+  uint32_t _dbin;
+
+  //edits
 
   yval_t _family;
   uint32_t _prev_mbsize0;
