@@ -18,6 +18,14 @@
 #include <gsl/gsl_sf_psi.h>
 #include <gsl/gsl_sf.h>
 
+//edits
+#include <eigen3/Eigen/Core>
+#include <math.h>
+#include "optimization.h"
+using namespace alglib;
+
+//edits
+
 class LinkSampling {
 public:
   LinkSampling(Env &env, Network &network);
@@ -82,6 +90,35 @@ private:
 
   void get_Epi(uint32_t n, Array &Epi);
   uint32_t most_likely_group(uint32_t p);
+  //edits
+//  void func_gau_delta(const real_1d_array &x,double &func_gdcommon,  double &func_g_d, double &grad_d_g, void *ptr);
+public :
+  void
+  func_gau_delta(const real_1d_array &x,double &func_gdcommon, double &func_g_d, double &grad_d_g, void *ptr) {
+        grad_d_g = _n * _gau * 1.0/(2 * x[0]);
+        Eigen::MatrixXd t_1_g = _eta_gau.transpose() * _eigen_phi_bar.row(0);
+        Eigen::MatrixXd t_2_g = _eta_gau.transpose() * _eigen_phi_bar.row(0).asDiagonal() * _eta_gau;
+
+        func_gdcommon = - pow(_network.get_gau(0, 0),2) / (4 * pow(x[0], 2)) +
+                                   (1.0 / pow(x[0], 2)) *
+                                   (t_1_g(0,0) * _network.get_gau(0, 0) - 0.5 * t_2_g(0,0));
+        for (uint32_t i = 0; i < _n; ++i){
+          for (uint32_t j = 0; j < _gau; ++j){
+              if (i != 0 && j != 0){
+                // To prevent overloading
+                Eigen::MatrixXd t_1_g = _eta_gau.transpose() * _eigen_phi_bar.row(i);
+                Eigen::MatrixXd t_2_g = _eta_gau.transpose() * _eigen_phi_bar.row(i).asDiagonal() * _eta_gau;
+                func_gdcommon += - pow(_network.get_gau(i, j),2) / (4 * pow(x[0], 2)) +
+                                      (1.0/ pow(x[0], 2))  *
+                                      (t_1_g(0,0) * _network.get_gau(i, j) - 0.5 * t_2_g(0,0));
+            }
+          }
+        }
+        grad_d_g += func_gdcommon;
+        func_g_d = 0.5 * _n * _gau * log(2 * M_PI * x[0]) - func_gdcommon;
+   }
+
+  //edits
 
   Env &_env;
   Network &_network;

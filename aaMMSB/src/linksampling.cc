@@ -8,6 +8,8 @@
 #include "log.hh"
 #include <sys/time.h>
 
+using namespace alglib;
+
 LinkSampling::LinkSampling(Env &env, Network &network)
   :_env(env), _network(network),
    _n(env.n), _k(env.k),
@@ -557,6 +559,8 @@ LinkSampling::compute_mean_indicators()
   }
 }
 
+// Create func_gau_delta to be passed into alglibvoid
+
 void
 LinkSampling::clear()
 {
@@ -662,7 +666,7 @@ LinkSampling::infer()
 	    if (_gau > 0){
 	    	for (uint32_t i = 0; i < _gau; ++i){
 	    		// Add first term
-	    		phi[k] += (_network.get_gau(p, k) * _eta_gau[k])/(_delta_gau * _training_links.data()[k]);
+	    		phi[k] += (_network.get_gau(p, k) * _eta_gau(k,0))/(_delta_gau * _training_links.data()[k]);
 	    		}
 	    	// Add second term
 	    	phi[k] -= _gau * pow(_network.get_gau(p, k), 2)/(2 * _delta_gau * _training_links.data()[k]);
@@ -670,7 +674,7 @@ LinkSampling::infer()
 	    if (_bin > 0){
 	    	for (uint32_t i = 0; i < _bin; ++i){
 	    	    // Add first term
-	    	    phi[k] += (_network.get_bin(p, k) * _eta_bin[k])/(_delta_bin * _training_links.data()[k]);
+	    	    phi[k] += (_network.get_bin(p, k) * _eta_bin(k,0))/(_delta_bin * _training_links.data()[k]);
 	    	    }
 	    	// Add second term
 	    	Eigen::MatrixXd phi_bar_a = Eigen::MatrixXd::Zero(_k, 1);
@@ -823,33 +827,12 @@ LinkSampling::infer()
     _eta_gau = eta_g_bot * eta_g_top;
     // Calculate eta_G
 
-    // Create func_gau_delta to be passed into alglib
-    void func_gau_delta(const real_1d_array &x, double &func_g_d, double &grad_d_g, void *ptr){
-      grad_d_g = _n * _gau * 1.0/(2 * x[0]);
-      Eigen::MatrixXd t_1_g = _eta_gau.transpose() * _eigen_phi_bar.row(0);
-      Eigen::MatrixXd t_2_g = _eta_gau.transpose() * _eigen_phi_bar.row(0).asDiagonal() * _eta_gau;
-      grad_delta_gau_common = - pow(_network.get_gau(i, j),2) / (4 * pow(x[0], 2)) +
-                                 (1.0 / pow(x[0], 2)) *
-                                 (t_1_g(0,0) * _network.get_gau(i, j) - 0.5 * t_2_g(0,0));
-      for (uint32_t i = 0; i < _n; ++i){
-        for (uint32_t j = 0; j < _gau; ++j){
-            if (i != 0 && j != 0){
-              // To prevent overloading
-              Eigen::MatrixXd t_1_g = _eta_gau.transpose() * _eigen_phi_bar.row(i);
-              Eigen::MatrixXd t_2_g = _eta_gau.transpose() * _eigen_phi_bar.row(i).asDiagonal() * _©eta_gau;
-              gau_delta_gau_common += - pow(_network.get_gau(i, j),2) / (4 * pow(x[0], 2)) +
-                                    (1.0/ pow(x[0], 2))  *
-                                    (t_1_g(0,0) * _network.get_gau(i, j) - 0.5 * t_2_g(0,0));
-          }
-        }
-      }
-      grad_d_g += grad_delta_gau_common;
-      func_g_d = 0.5 * _n * _gau * log(2 * M_PI * x[0]) - gau_delta_common;
-    }
 
     if (_iter == 1){
       real_1d_array x_g_d;
-      x_g_d.setcontent(1, _delta_gau);
+      double tmp[] = {_delta_gau};
+      x_g_d.setcontent(1,tmp);
+
       double epsg = 0.0000000001;
       double epsf = 0;
       double epsx = 0;
@@ -859,18 +842,18 @@ LinkSampling::infer()
 
       minlbfgscreate(1, x_g_d, state);
       minlbfgssetcond(state, epsg, epsf, epsx, maxits);
-      alglib::minlbfgsoptimize(state, function_gau_delta);
+      alglib::minlbfgsoptimize(state, func_gau_delta);
       minlbfgsresults(state, x_g_d, rep);
-
-      _delta_gau = &x_g_d.getcontent();
-    }
-    else {
-      x_g_d.setcontent(1, _delta_gau);
+      _delta_gau = *x_g_d.getcontent();
+    } else {
+      real_1d_array x_g_d;
+      double tmp[] = {_delta_gau};
+      x_g_d.setcontent(1,tmp);
       minlbfgsrestartfrom(state, x_g_d);
-      alglib::minlbfgsoptimize(state, function1_gau_delta);
+      alglib::minlbfgsoptimize(state, func_gau_delta);
       minlbfgsresults(state, x_g_d, rep);
 
-      _delta_gau = &x_g_d.getcontent();
+      _delta_gau = *x_g_d.getcontent();
     }
 
     // Edit
