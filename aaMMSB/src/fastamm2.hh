@@ -652,11 +652,17 @@ FastAMM2::edge_likelihood(uint32_t p, uint32_t q, yval_t y) const
   return log(s);
 }
 
-// edits: add attributes likelihood
+// edits: add attributes likelihood sky
 inline double
 FastAMM2::atrributes_likelihood(uint32_t p, uint32_t i, double x) const
 {
   Array xp_i(_env.dgau);
+  double u = .0
+  if(_env.dgau > 0){
+	  for ( uint32_t i; i < _env.dgau; ++i){
+		  // equation 60
+	  }
+  }
 //  estimate_pi(p, pi_p);
 //  estimate_pi(q, pi_q);
 //
