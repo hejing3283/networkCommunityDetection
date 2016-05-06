@@ -1,3 +1,9 @@
+// Edit
+#include <eigen3/Eigen/Core>
+#include <math.h>
+#include "optimization.h"
+// Edit
+
 #include "linksampling.hh"
 #include "log.hh"
 #include <sys/time.h>
@@ -10,6 +16,13 @@ LinkSampling::LinkSampling(Env &env, Network &network)
    _eta(_k,_t),
    _gamma(_n,_k), _lambda(_k,_t),
    _gammanext(_n,_k), _lambdanext(_k,_t),
+   // Edit
+   _gau(env.dgau), _bin(env.dbin),
+   _eta_gau(_k, 1), _delta_gau(env.delta_gau),
+   _gMatrix(network.get_gauMatrix()), _bMatrix(network.get_binMatrix()),
+   _eigen_phi_bar(_n, _k),
+   _eta_bin(_k, 1), _delta_bin(env.delta_bin),
+   // Edit
    _tau0(env.tau0 + 1), _kappa(env.kappa),
    _nodetau0(env.nodetau0 + 1), _nodekappa(env.nodekappa),
    _rhot(.0), _noderhot(_n),
@@ -45,7 +58,7 @@ LinkSampling::LinkSampling(Env &env, Network &network)
 
   _alpha.set_elements(env.alpha);
   info("alpha set to %s\n", _alpha.s().c_str());
-  
+
   _ones_prob = double(_network.ones()) / _total_pairs;
   _zeros_prob = 1 - _ones_prob;
 
@@ -229,7 +242,7 @@ LinkSampling::set_precision_biased_sample(int s1)
 
     uint32_t mm = 0;
     const vector<uint32_t> *v = _network.get_edges(r % 2 ? a : b);
-    for (uint32_t j = 0; j < v->size() && mm < limit; ++j) {    
+    for (uint32_t j = 0; j < v->size() && mm < limit; ++j) {
       uint32_t q = (*v)[j];
       const vector<uint32_t> *u = _network.get_edges(q);
       for (uint32_t k = 0; u && k < u->size() && mm < limit; ++k) {
@@ -326,7 +339,7 @@ LinkSampling::set_precision_uniform_sample(int s)
     uint32_t a = e.first;
     uint32_t b = e.second;
     yval_t y = get_y(a,b);
-    
+
     if (y == 0 and c0 < q) {
       c0++;
       _precision_pairs.push_back(e);
@@ -380,18 +393,18 @@ LinkSampling::init_gamma2()
     const vector<uint32_t> *edges = _network.get_edges(p);
     for (uint32_t r = 0; r < edges->size(); ++r) {
       uint32_t q = (*edges)[r];
-	
+
       if (p >= q)
 	continue;
-      
+
       yval_t y = get_y(p,q);
       assert (y == 1);
-	
+
       phi.zero();
       for (uint32_t k = 0; k < _k ; ++k)
 	phi[k] = gsl_rng_uniform(_r);
       phi.normalize();
-	
+
       _gamma.add_slice(p, phi);
       _gamma.add_slice(q, phi);
     }
@@ -412,10 +425,10 @@ LinkSampling::init_gamma_external()
     const vector<uint32_t> *edges = _network.get_edges(p);
     for (uint32_t r = 0; r < edges->size(); ++r) {
       uint32_t q = (*edges)[r];
-      
+
       yval_t y = get_y(p,q);
       assert (y == 1);
-	
+
       phi.zero();
       const double  **elogpid = _Elogpi.const_data();
       for (uint32_t k = 0; k < _k ; ++k)
@@ -425,7 +438,7 @@ LinkSampling::init_gamma_external()
       //_gamma.add_slice(q, phi);
 
       //for (uint32_t k = 0; k < _k; ++k)
-      //	_sum[k] += phi[k];      
+      //	_sum[k] += phi[k];
 
       MapVec::const_iterator itr = m.find(p);
       if (itr != m.end()) {
@@ -437,9 +450,9 @@ LinkSampling::init_gamma_external()
 	}
       }
       phi.normalize();
-      
+
       _gamma.add_slice(p, phi);
-      
+
       for (uint32_t k = 0; k < _k; ++k)
 	_sum[k] += phi[k];
     }
@@ -466,9 +479,9 @@ LinkSampling::check_and_set_converged(uint32_t p)
 	_active_k[p].push_back(k);
       pk = k;
     }
-  if (active_comms > _k / 10) 
+  if (active_comms > _k / 10)
     _active_k[p].clear(); // no use for it; save memory
-  
+
   if (active_comms == 1)
     _converged[p] = pk + 1;
   _active_comms[p] = active_comms;
@@ -482,7 +495,7 @@ LinkSampling::prune()
     check_and_set_converged(p);
     m[_active_comms[p] / 10]++;
   }
-  for (map<uint32_t, uint32_t>::const_iterator j = m.begin(); 
+  for (map<uint32_t, uint32_t>::const_iterator j = m.begin();
        j != m.end(); ++j) {
     uint32_t k = j->first;
     uint32_t v = j->second;
@@ -493,7 +506,7 @@ LinkSampling::prune()
 void
 LinkSampling::assign_training_links()
 {
-  _nlinks = 0;
+  _nlinks = 0; // # of training links
   double **linksd = _links.data();
   for (uint32_t p = 0; p < _n; ++p)  {
     const vector<uint32_t> *edges = _network.get_edges(p);
@@ -505,16 +518,16 @@ LinkSampling::assign_training_links()
 	Network::order_edge(_env, e);
 	if (!edge_ok(e)) {
 	  debug("edge %d,%d is held out\n", e.first, e.second);
-	  continue; 
+	  continue;
 	}
       }
-
+      // contains all links of p and q
       _training_links[p]++;
       _training_links[q]++;
 
       if (p >= q)
 	continue;
-      
+
       linksd[_nlinks][0] = p;
       linksd[_nlinks][1] = q;
       _nlinks++;
@@ -531,13 +544,13 @@ LinkSampling::compute_mean_indicators()
   for (uint32_t p = 0; p < _n; ++p) {
     if (_training_links[p] == 0)
       continue;
-    
+
     for (uint32_t k = 0; k < _k; ++k) {
       mphid[p][k] = (gnextd[p][k] - _env.alpha) / _training_links[p];
       _s1[k] += mphid[p][k];
       _s2[k] += mphid[p][k] * mphid[p][k];
       gnextd[p][k] += (_n - _training_links[p] - 1) * mphid[p][k];
-      
+
       if (_annealing_phase)
 	gnextd[p][k] *= _network.ones() / _sum[k];
     }
@@ -564,12 +577,12 @@ LinkSampling::infer()
 
   Array phi(_k);
   assign_training_links();
-  
+
   bool write_comm = false;
   double **fmapd = _fmap.data();
-  
+
   while (1) {
-    
+
     if (_env.max_iterations && _iter > _env.max_iterations) {
       printf("+ Quitting: reached max iterations.\n");
       Env::plog("maxiterations reached", true);
@@ -600,7 +613,7 @@ LinkSampling::infer()
     clear();
 
     uint32_t c = 0, d = 0;
-    const double **linksd = _links.const_data();    
+    const double **linksd = _links.const_data();
     const double  **elogpid = _Elogpi.const_data();
     for (uint32_t n = 0; n < _nlinks; ++n) {
       uint32_t p = linksd[n][0];
@@ -612,7 +625,7 @@ LinkSampling::infer()
 	const SampleMap::const_iterator u = _validation_map.find(e);
 	assert (u == _validation_map.end());
       }
-      
+
       links = 0;
       phi.zero();
 
@@ -630,6 +643,7 @@ LinkSampling::infer()
 	_sum[qc - 1]+=2;
 	lnextd[qc - 1][0]+=2;
       } else {
+  // r accumulate all phi
 	double r = .0;
 	if (_iter > 1000 && (_active_comms[p] < _k / 10) && (_active_comms[q] < _k / 10))  {
 	  list<uint16_t> l1 = _active_k[p];
@@ -638,17 +652,42 @@ LinkSampling::infer()
 	  l2.sort();
 	  l1.merge(l2);
 	  l1.unique();
-	  
+
 	  bool first = false;
 	  for (list<uint16_t>::const_iterator itr = l1.begin();
 	       itr != l1.end(); itr++) {
 	    uint32_t k = *itr;
 	    phi[k] = elogpid[p][k] + elogpid[q][k] + elogbetad[k][0];
+	    // Edit
+	    if (_gau > 0){
+	    	for (uint32_t i = 0; i < _gau; ++i){
+	    		// Add first term
+	    		phi[k] += (_network.get_gau(p, k) * _eta_gau[k])/(_delta_gau * _training_links.data()[k]);
+	    		}
+	    	// Add second term
+	    	phi[k] -= _gau * pow(_network.get_gau(p, k), 2)/(2 * _delta_gau * * _training_links.data()[k])
+	     }
+	    if (_bin > 0){
+	    	for (uint32_t i = 0; i < _bin; ++i){
+	    	    // Add first term
+	    	    phi[k] += (_network.get_bin(p, k) * _eta_bin[k])/(_delta_bin * _training_links.data()[k]);
+	    	    }
+	    	// Add second term
+	    	Eigen::MatrixXd phi_bar_a = Eigen::MatrixXi::Zero(_k, 1);
+	    	const double **mphi_to_use = _mphi.const_data();
+	    	for (uint32_t i = 0; i < _k; ++i){
+	    		phi_bar_a(k) = mphi_to_use[p][i];
+	    	}
+	    	double to_exp = _eta_bin.transpose() * phi_bar_a;
+	    	double exped = exp(to_exp);
+	    	phi[k] -= (_network.get_bin(p, k) * exped)/(_delta_bin * _training_links.data()[k] * (1+ exped));
+	    }
+	    // Edit
 	    if (!first) {
 	      r = phi[k];
 	      first = true;
 	    } else if (phi[k] < r)
-	      r = r + log(1 + ::exp(phi[k] - r));	    
+	      r = r + log(1 + ::exp(phi[k] - r));
 	    else
 	      r = phi[k] + log(1 + ::exp(r - phi[k]));
 	  }
@@ -668,11 +707,11 @@ LinkSampling::infer()
 	  if (write_comm) {
 	    uint32_t max_k = 65535;
 	    double max = phi.max(max_k);
-	    
+
 	    if (max > _env.link_thresh) {
 	      fmapd[p][max_k]++;
 	      fmapd[q][max_k]++;
-	      
+
 	      if (fmapd[p][max_k] > _env.lt_min_deg)
 		_communities[max_k].push_back(p);
 	      if (fmapd[q][max_k] > _env.lt_min_deg)
@@ -687,12 +726,12 @@ LinkSampling::infer()
 	    if (k == 0)
 	      r = phi[k];
 	    else if (phi[k] < r)
-	      r = r + log(1 + ::exp(phi[k] - r));	    
+	      r = r + log(1 + ::exp(phi[k] - r));
 	    else
 	      r = phi[k] + log(1 + ::exp(r - phi[k]));
 	  }
 	  phi.lognormalize(r);
-	  
+
 	  for (uint32_t k = 0; k < _k; ++k) {
 	    gnextd[p][k] += phi[k];
 	    gnextd[q][k] += phi[k];
@@ -704,11 +743,11 @@ LinkSampling::infer()
 	  if (write_comm) {
 	    uint32_t max_k = 65535;
 	    double max = phi.max(max_k);
-	    
+
 	    if (max > _env.link_thresh) {
 	      fmapd[p][max_k]++;
 	      fmapd[q][max_k]++;
-	      
+
 	      if (fmapd[p][max_k] > _env.lt_min_deg)
 		_communities[max_k].push_back(p);
 	      if (fmapd[q][max_k] > _env.lt_min_deg)
@@ -725,9 +764,9 @@ LinkSampling::infer()
     }
     info("\nlocal step on (%d,%d,%d,%d) links\n", c, d, c+d, _nlinks);
     compute_mean_indicators();
-    
+
     info("duration = %d secs\n", duration());
-    
+
     const double **mphid = _mphi.const_data();
     for (uint32_t n = 0; n < _nlinks; ++n) {
       uint32_t p = linksd[n][0];
@@ -735,21 +774,105 @@ LinkSampling::infer()
 
       uint32_t pc = _converged[p];
       uint32_t qc = _converged[q];
-      
+
       if (pc && !qc)
 	_s3[pc - 1] += mphid[q][pc];
-      else if (!pc && qc) 
+      else if (!pc && qc)
 	_s3[qc - 1] += mphid[p][qc];
       else
 	for (uint32_t k = 0; k < _k; ++k)
 	  _s3[k] += mphid[p][k] * mphid[q][k];
     }
-    
+
     for (uint32_t k = 0; k < _k; ++k)
       lnextd[k][1] += _s1[k] * _s1[k] - _s2[k] - _s3[k];
 
     _gamma.swap(_gammanext);
     _lambda.swap(_lambdanext);
+
+    // Edit
+    // Update etas and deltas
+    // Convert to Eigen Matrix
+    for (uint32_t i = 0; i < _n; ++i){
+      for (uint32_t j = 0; j < _k; ++i){
+        _eigen_phi_bar(i, j) = mphid[i][j];
+      }
+    }
+
+    Eigen::MatrixXd eta_g_top = Eigen::MatrixXd::Zero(_k, 1);
+    for (uint32_t i = 0; i < _n; ++i){
+      for (uint32_t j = 0; j < _gau; ++j){
+        eta_g_top += _network.get_gau(i, j) * _eigen_phi_bar.row(i);
+      }
+    }
+
+    // Invert _gammat
+    Eigen::MatrixXd _gammat_invert = Eigen::MatrixXd::Zero(_n, _k);
+    for (uint32_t i = 0; i < _n; ++i){
+      for (uint32_t j = 0; j < _gau; ++j){
+        _gammat_invert(i, j) = 1.0 / _eigen_phi_bar(i, j);
+      }
+    }
+
+    Eigen::MatrixXd eta_g_bot = Eigen::MatrixXd::Zero(_k, _k);
+    for (uint32_t i = 0; i < _n; ++i){
+      eta_g_bot += _gau * _gammat_invert.row(i).asDiagonal();
+    }
+
+    _eta_gau = eta_g_bot * eta_g_top;
+    // Calculate eta_G
+
+    // Create func_gau_delta to be passed into alglib
+    void func_gau_delta(const real_1d_array &x, double &func_g_d, double &grad_d_g, void *ptr){
+      grad_d_g = _n * _gau * 1.0/(2 * x[0]);
+      Eigen::MatrixXd t_1_g = _eta_gau.transpose() * _eigen_phi_bar.row(0);
+      Eigen::MatrixXd t_2_g = _eta_gau.transpose() * _eigen_phi_bar.row(0).asDiagonal() * _eta_gau;
+      grad_delta_gau_common = - pow(_network.get_gau(i, j),2) / (4 * pow(x[0], 2)) +
+                                 (1.0 / pow(x[0], 2)) *
+                                 (t_1_g(0,0) * _network.get_gau(i, j) - 0.5 * t_2_g(0,0));
+      for (uint32_t i = 0; i < _n; ++i){
+        for (uint32_t j = 0; j < _gau; ++j){
+            if (i != 0 && j != 0){
+              // To prevent overloading
+              Eigen::MatrixXd t_1_g = _eta_gau.transpose() * _eigen_phi_bar.row(i);
+              Eigen::MatrixXd t_2_g = _eta_gau.transpose() * _eigen_phi_bar.row(i).asDiagonal() * _eta_gau;
+              gau_delta_gau_common += - pow(_network.get_gau(i, j),2) / (4 * pow(x[0], 2)) +
+                                    (1.0/ pow(x[0], 2))  *
+                                    (t_1_g(0,0) * _network.get_gau(i, j) - 0.5 * t_2_g(0,0));
+          }
+        }
+      }
+      grad_d_g += grad_delta_gau_common;
+      func_g_d = 0.5 * _n * _gau * log(2 * M_PI * x[0]) - gau_delta_common;
+    }
+
+    if (_iter == 1){
+      real_1d_array x_g_d;
+      x_g_d.setcontent(1, _delta_gau);
+      double epsg = 0.0000000001;
+      double epsf = 0;
+      double epsx = 0;
+      ae_int_t maxits = 0;
+      minlbfgsstate state;
+      minlbfgsreport rep;
+
+      minlbfgscreate(1, x_g_d, state);
+      minlbfgssetcond(state, epsg, epsf, epsx, maxits);
+      alglib::minlbfgsoptimize(state, function_gau_delta);
+      minlbfgsresults(state, x_g_d, rep);
+
+      _delta_gau = &x_g_d.getcontent();
+    }
+    else {
+      x_g_d.setcontent(1, _delta_gau);
+      minlbfgsrestartfrom(state, x_g_d);
+      alglib::minlbfgsoptimize(state, function1_gau_delta);
+      minlbfgsresults(state, x_g_d, rep);
+
+      _delta_gau = &x_g_d.getcontent();
+    }
+
+    // Edit
 
     _gammanext.set_elements(_env.alpha);
     _lambdanext.copy_from(_eta);
@@ -757,7 +880,7 @@ LinkSampling::infer()
     set_dir_exp(_gamma, _Elogpi);
     if (!_env.nolambda)
       set_dir_exp(_lambda, _Elogbeta);
-    
+
     prune();
 
     if (_env.terminate) {
@@ -774,7 +897,7 @@ LinkSampling::infer()
     }
 
     info("annealing phase : %s", _annealing_phase ? "true" : "false");
-    
+
     if (_iter % _env.reportfreq == 0) {
       double a, b, c;
       validation_likelihood(a, b, c);
@@ -858,12 +981,12 @@ LinkSampling::auc()
   FILE *f = fopen(Env::file_str("/auc.txt").c_str(), "w");
   for (SampleMap::const_iterator i = _precision_map.begin();
        i != _precision_map.end(); ++i) {
-    
+
     const Edge &e = i->first;
     uint32_t p = e.first;
     uint32_t q = e.second;
     assert (p != q);
-    
+
     yval_t y = _network.y(p,q);
     double u = link_prob(p,q);
 
@@ -884,7 +1007,7 @@ LinkSampling::write_communities(MapVec &communities, string name)
 {
   const IDMap &seq2id = _network.seq2id();
   FILE *commf = fopen(Env::file_str(name.c_str()).c_str(), "w");
-  for (std::map<uint32_t, vector<uint32_t> >::const_iterator i 
+  for (std::map<uint32_t, vector<uint32_t> >::const_iterator i
 	 = communities.begin(); i != communities.end(); ++i) {
     const vector<uint32_t> &u = i->second;
 
@@ -931,7 +1054,7 @@ LinkSampling::gml(uint32_t cid, const vector<uint32_t> &ids)
     fprintf(f, "\tnode\n\t[\n");
     fprintf(f, "\t\tid %d\n", ids[i]);
     fprintf(f, "\t\textid %d\n", idt->second);
-    fprintf(f, "\t\tgroup %d\n", g);    
+    fprintf(f, "\t\tgroup %d\n", g);
     fprintf(f, "\t\tdegree %d\n", _network.deg(ids[i]));
     fprintf(f, "\t]\n");
   }
@@ -943,7 +1066,7 @@ LinkSampling::gml(uint32_t cid, const vector<uint32_t> &ids)
       if (ids[i] < ids[j] && _network.y(ids[i],ids[j]) != 0) {
 	get_Epi(ids[i], pp);
 	get_Epi(ids[j], qp);
-	
+
 	Array beta(_k);
 	estimate_beta(beta);
 	uint32_t max_k = 65536;
@@ -991,7 +1114,7 @@ LinkSampling::validation_likelihood(double &a, double &a0, double &a1)
     }
   }
 
-  double nshol = (_zeros_prob * (szeros / kzeros)) + 
+  double nshol = (_zeros_prob * (szeros / kzeros)) +
     (_ones_prob * (sones / kones));
   fprintf(_vf, "%d\t%d\t%.9f\t%d\t%.9f\t%d\t%.9f\t%d\t%.9f\t%.9f\t%.9f\n",
 	  _iter, duration(), s / k, k,
@@ -1006,7 +1129,7 @@ LinkSampling::validation_likelihood(double &a, double &a0, double &a1)
   bool stop = false;
   int why = -1;
   if (_iter > 10) {
-    if (a > _prev_h && _prev_h != 0 && 
+    if (a > _prev_h && _prev_h != 0 &&
 	fabs((a - _prev_h) / _prev_h) < 0.00001) {
       stop = true;
       why = 100;
@@ -1020,7 +1143,7 @@ LinkSampling::validation_likelihood(double &a, double &a0, double &a1)
       _max_h = a;
       _max_t = at0;
     }
-    
+
     if (_nh > 2) { // be robust to small fluctuations in predictive likelihood
       why = 1;
       stop = true;
@@ -1028,13 +1151,13 @@ LinkSampling::validation_likelihood(double &a, double &a0, double &a1)
   }
   _prev_h = nshol;
   FILE *f = fopen(Env::file_str("/max.txt").c_str(), "w");
-  fprintf(f, "%d\t%d\t%.5f\t%.5f\t%.5f\t%d\n", 
-	  _iter, duration(), 
+  fprintf(f, "%d\t%d\t%.5f\t%.5f\t%.5f\t%d\n",
+	  _iter, duration(),
 	  a, _max_t, _max_h, why);
   fclose(f);
 
   if (_annealing_phase && stop) {
-    info("annealing phase completed (%d secs) at iteration %d\n", 
+    info("annealing phase completed (%d secs) at iteration %d\n",
 	 duration(), _iter);
     _annealing_phase = false;
     _nh = 0;
@@ -1085,12 +1208,12 @@ LinkSampling::load_test_sets()
       fprintf(stderr, "error: cannot read uniform heldout test file\n");
       exit(-1);
     }
-    
+
     IDMap::const_iterator i1 = id2seq.find(a);
     IDMap::const_iterator i2 = id2seq.find(b);
-    
+
     if ((i1 == id2seq.end()) || (i2 == id2seq.end())) {
-      fprintf(stderr, "error: id %d or id %d not found in original network\n", 
+      fprintf(stderr, "error: id %d or id %d not found in original network\n",
 	      a, b);
       exit(-1);
     }
@@ -1110,7 +1233,7 @@ LinkSampling::load_test_sets()
   fprintf(uef, "%s\n", edgelist_s(_uniform_pairs).c_str());
   fclose(uef);
   fclose(f);
- 
+
   n = 0;
   f = fopen("biased-heldout-pairs.txt", "r");
   while (!feof(f)) {
@@ -1118,12 +1241,12 @@ LinkSampling::load_test_sets()
       fprintf(stderr, "error: cannot read biased heldout test file\n");
       exit(-1);
     }
-    
+
     IDMap::const_iterator i1 = id2seq.find(a);
     IDMap::const_iterator i2 = id2seq.find(b);
-    
+
     if ((i1 == id2seq.end()) || (i2 == id2seq.end())) {
-      fprintf(stderr, "error: id %d or id %d not found in original network\n", 
+      fprintf(stderr, "error: id %d or id %d not found in original network\n",
 	      a, b);
       exit(-1);
     }
@@ -1188,12 +1311,12 @@ LinkSampling::biased_auc()
   FILE *f = fopen(Env::file_str("/biased_auc.txt").c_str(), "w");
   for (SampleMap::const_iterator i = _biased_map.begin();
        i != _biased_map.end(); ++i) {
-    
+
     const Edge &e = i->first;
     uint32_t p = e.first;
     uint32_t q = e.second;
     assert (p != q);
-    
+
     yval_t y = _network.y(p,q);
     double u = link_prob(p,q);
 
@@ -1209,12 +1332,12 @@ LinkSampling::uniform_auc()
   FILE *f = fopen(Env::file_str("/uniform_auc.txt").c_str(), "w");
   for (SampleMap::const_iterator i = _uniform_map.begin();
        i != _uniform_map.end(); ++i) {
-    
+
     const Edge &e = i->first;
     uint32_t p = e.first;
     uint32_t q = e.second;
     assert (p != q);
-    
+
     yval_t y = _network.y(p,q);
     double u = link_prob(p,q);
 
@@ -1357,7 +1480,7 @@ LinkSampling::most_likely_group(uint32_t p)
   Array Epi(_k);
   get_Epi(p, Epi);
   double max_k = .0, max_p = .0;
-  
+
   for (uint32_t k = 0; k < _k; ++k)
     if (Epi[k] > max_p) {
       max_p = Epi[k];
@@ -1388,16 +1511,16 @@ LinkSampling::load_validation()
   FILE *f = fopen(_env.load_heldout_fname.c_str(), "r");
   while (!feof(f)) {
     if (fscanf(f, "%d\t%d\n", &a, &b) < 0) {
-      lerr("error: cannot read test validation file %s\n", 
+      lerr("error: cannot read test validation file %s\n",
 	   _env.load_heldout_fname.c_str());
       exit(-1);
     }
-    
+
     IDMap::const_iterator i1 = id2seq.find(a);
     IDMap::const_iterator i2 = id2seq.find(b);
-    
+
     if ((i1 == id2seq.end()) || (i2 == id2seq.end())) {
-      lerr("error: id %d or id %d not found in original network\n", 
+      lerr("error: id %d or id %d not found in original network\n",
 	   a, b);
       exit(-1);
     }
@@ -1422,16 +1545,16 @@ LinkSampling::load_test()
   FILE *f = fopen(_env.load_test_fname.c_str(), "r");
   while (!feof(f)) {
     if (fscanf(f, "%d\t%d\n", &a, &b) < 0) {
-      lerr("error: cannot read test test file %s\n", 
+      lerr("error: cannot read test test file %s\n",
 	   _env.load_test_fname.c_str());
       exit(-1);
     }
-    
+
     IDMap::const_iterator i1 = id2seq.find(a);
     IDMap::const_iterator i2 = id2seq.find(b);
-    
+
     if ((i1 == id2seq.end()) || (i2 == id2seq.end())) {
-      lerr("error: id %d or id %d not found in original network\n", 
+      lerr("error: id %d or id %d not found in original network\n",
 	   a, b);
       exit(-1);
     }

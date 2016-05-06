@@ -1122,7 +1122,7 @@ FastAMM2::opt_process(NodeMap &nodes,
   Eigen::MatrixXd eta_g_top = Eigen::MatrixXd::Zero(_k, 1);
   for (uint32_t i = 0; i < _n; ++i){
     for (uint32_t j = 0; j < _gau; ++j){
-      eta_g_top += _network.get_gau(i, j) * _eigen_phi_bar(i, j);
+      eta_g_top += _network.get_gau(i, j) * _eigen_phi_bar.row(i);
     }
   }
 
@@ -1145,8 +1145,8 @@ FastAMM2::opt_process(NodeMap &nodes,
   // Create func_gau_delta to be passed into alglib
   void func_gau_delta(const real_1d_array &x, double &func_g_d, double &grad_d_g, void *ptr){
     grad_d_g = _n * _gau * 1.0/(2 * x[0]);
-    Eigen::MatrixXd t_1_g = eta_gau.transpose() * _eigen_phi_bar.row(0);
-    Eigen::MatrixXd t_2_g = eta_gau.transpose() * _eigen_phi_bar.row(0).asDiagonal() * eta_gau;
+    Eigen::MatrixXd t_1_g = _eta_gau.transpose() * _eigen_phi_bar.row(0);
+    Eigen::MatrixXd t_2_g = _eta_gau.transpose() * _eigen_phi_bar.row(0).asDiagonal() * _eta_gau;
     grad_delta_gau_common = - pow(_network.get_gau(i, j),2) / (4 * pow(x[0], 2)) +
                                (1.0 / pow(x[0], 2)) *
                                (t_1_g(0,0) * _network.get_gau(i, j) - 0.5 * t_2_g(0,0));
@@ -1154,8 +1154,8 @@ FastAMM2::opt_process(NodeMap &nodes,
       for (uint32_t j = 0; j < _gau; ++j){
           if (i != 0 && j != 0){
             // To prevent overloading
-            Eigen::MatrixXd t_1_g = eta_gau.transpose() * _eigen_phi_bar.row(i);
-            Eigen::MatrixXd t_2_g = eta_gau.transpose() * _eigen_phi_bar.row(i).asDiagonal() * eta_gau;
+            Eigen::MatrixXd t_1_g = _eta_gau.transpose() * _eigen_phi_bar.row(i);
+            Eigen::MatrixXd t_2_g = _eta_gau.transpose() * _eigen_phi_bar.row(i).asDiagonal() * _eta_gau;
             gau_delta_gau_common += - pow(_network.get_gau(i, j),2) / (4 * pow(x[0], 2)) +
                                   (1.0/ pow(x[0], 2))  *
                                   (t_1_g(0,0) * _network.get_gau(i, j) - 0.5 * t_2_g(0,0));
@@ -1591,9 +1591,9 @@ FastAMM2::heldout_likelihood()
     double u = edge_likelihood(p,q,y);
     s += u;
     //edits
-    u = attributes_likelihood(p);
+    // u = attributes_likelihood(p);
     s += u;
-    u = attributes_likelihood(q);
+    // u = attributes_likelihood(q);
     s += u;
     //edits
     k += 1;
@@ -1616,7 +1616,13 @@ FastAMM2::heldout_likelihood()
   fflush(_hf);
 
   // Use hol @ network sparsity as stopping criteria
-  double a = nshol + attribute_likelihood(_eigen_phi_bar, _eta_gau, _delta_gau);
+  double a = nshol
+  // Edit
+  if (_gau)
+    a += attribute_likelihood(_eigen_phi_bar, _eta_gau, _delta_gau);
+  if (_bin)
+    a += attribute_likelihood_bin(_eigen_phi_bar, _eta_bin, _delta_bin)
+  // Edit
 
   bool stop = false;
   int why = -1;
