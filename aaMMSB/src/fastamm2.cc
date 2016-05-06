@@ -1617,10 +1617,12 @@ FastAMM2::heldout_likelihood()
 
   // Use hol @ network sparsity as stopping criteria
   double a = nshol
+  // Edit
   if (_gau)
     a += attribute_likelihood(_eigen_phi_bar, _eta_gau, _delta_gau);
   if (_bin)
     a += attribute_likelihood_bin(_eigen_phi_bar, _eta_bin, _delta_bin)
+  // Edit
 
   bool stop = false;
   int why = -1;

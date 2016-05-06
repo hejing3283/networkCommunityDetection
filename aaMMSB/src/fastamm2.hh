@@ -144,7 +144,7 @@ PhiCompute::update_phis(bool is_phi1, Eigen::MatrixXd _eta_gau, Eigen::MatrixXd 
 	   		double to_exp = _eta_bin.transpose() * _eigen_phi_bar.row(i);
 	   		double exped = exp(to_exp);
 	   		w += (_net.get_gau(c, i) * eta_b_k) / (_env.n * _env.delta_bin)
-	   				- (eta_b_k * exped) / (exped * _env.delta_bin);
+	   				- (eta_b_k * exped) / (_env.n * _env.delta_bin * (1 + exped));
 	   }
 
 //    }else if(_env.dgau == 0 & _env.dbin > 0){
