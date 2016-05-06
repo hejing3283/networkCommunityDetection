@@ -24,7 +24,7 @@
 #include <gsl/gsl_sf.h>
 
 //edits
-#include "math.h";
+#include "math.h"
 //edits
 
 //#define TRAINING_SAMPLE 1

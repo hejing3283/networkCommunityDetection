@@ -20,6 +20,7 @@ LinkSampling::LinkSampling(Env &env, Network &network)
    _gau(env.dgau), _bin(env.dbin),
    _eta_gau(_k, 1), _delta_gau(env.delta_gau),
    _gMatrix(network.get_gauMatrix()), _bMatrix(network.get_binMatrix()),
+   _eigen_phi_bar(_n, _k),
    _eta_bin(_k, 1), _delta_bin(env.delta_bin),
    // Edit
    _tau0(env.tau0 + 1), _kappa(env.kappa),
@@ -791,9 +792,88 @@ LinkSampling::infer()
 
     // Edit
     // Update etas and deltas
+    // Convert to Eigen Matrix
+    for (uint32_t i = 0; i < _n; ++i){
+      for (uint32_t j = 0; j < _k; ++i){
+        _eigen_phi_bar(i, j) = mphid[i][j];
+      }
+    }
 
+    Eigen::MatrixXd eta_g_top = Eigen::MatrixXd::Zero(_k, 1);
+    for (uint32_t i = 0; i < _n; ++i){
+      for (uint32_t j = 0; j < _gau; ++j){
+        eta_g_top += _network.get_gau(i, j) * _eigen_phi_bar.row(i);
+      }
+    }
+
+    // Invert _gammat
+    Eigen::MatrixXd _gammat_invert = Eigen::MatrixXd::Zero(_n, _k);
+    for (uint32_t i = 0; i < _n; ++i){
+      for (uint32_t j = 0; j < _gau; ++j){
+        _gammat_invert(i, j) = 1.0 / _eigen_phi_bar(i, j);
+      }
+    }
+
+    Eigen::MatrixXd eta_g_bot = Eigen::MatrixXd::Zero(_k, _k);
+    for (uint32_t i = 0; i < _n; ++i){
+      eta_g_bot += _gau * _gammat_invert.row(i).asDiagonal();
+    }
+
+    _eta_gau = eta_g_bot * eta_g_top;
+    // Calculate eta_G
+
+    // Create func_gau_delta to be passed into alglib
+    void func_gau_delta(const real_1d_array &x, double &func_g_d, double &grad_d_g, void *ptr){
+      grad_d_g = _n * _gau * 1.0/(2 * x[0]);
+      Eigen::MatrixXd t_1_g = _eta_gau.transpose() * _eigen_phi_bar.row(0);
+      Eigen::MatrixXd t_2_g = _eta_gau.transpose() * _eigen_phi_bar.row(0).asDiagonal() * _eta_gau;
+      grad_delta_gau_common = - pow(_network.get_gau(i, j),2) / (4 * pow(x[0], 2)) +
+                                 (1.0 / pow(x[0], 2)) *
+                                 (t_1_g(0,0) * _network.get_gau(i, j) - 0.5 * t_2_g(0,0));
+      for (uint32_t i = 0; i < _n; ++i){
+        for (uint32_t j = 0; j < _gau; ++j){
+            if (i != 0 && j != 0){
+              // To prevent overloading
+              Eigen::MatrixXd t_1_g = _eta_gau.transpose() * _eigen_phi_bar.row(i);
+              Eigen::MatrixXd t_2_g = _eta_gau.transpose() * _eigen_phi_bar.row(i).asDiagonal() * _eta_gau;
+              gau_delta_gau_common += - pow(_network.get_gau(i, j),2) / (4 * pow(x[0], 2)) +
+                                    (1.0/ pow(x[0], 2))  *
+                                    (t_1_g(0,0) * _network.get_gau(i, j) - 0.5 * t_2_g(0,0));
+          }
+        }
+      }
+      grad_d_g += grad_delta_gau_common;
+      func_g_d = 0.5 * _n * _gau * log(2 * M_PI * x[0]) - gau_delta_common;
+    }
+
+    if (_iter == 1){
+      real_1d_array x_g_d;
+      x_g_d.setcontent(1, _delta_gau);
+      double epsg = 0.0000000001;
+      double epsf = 0;
+      double epsx = 0;
+      ae_int_t maxits = 0;
+      minlbfgsstate state;
+      minlbfgsreport rep;
+
+      minlbfgscreate(1, x_g_d, state);
+      minlbfgssetcond(state, epsg, epsf, epsx, maxits);
+      alglib::minlbfgsoptimize(state, function_gau_delta);
+      minlbfgsresults(state, x_g_d, rep);
+
+      _delta_gau = &x_g_d.getcontent();
+    }
+    else {
+      x_g_d.setcontent(1, _delta_gau);
+      minlbfgsrestartfrom(state, x_g_d);
+      alglib::minlbfgsoptimize(state, function1_gau_delta);
+      minlbfgsresults(state, x_g_d, rep);
+
+      _delta_gau = &x_g_d.getcontent();
+    }
 
     // Edit
+
     _gammanext.set_elements(_env.alpha);
     _lambdanext.copy_from(_eta);
 

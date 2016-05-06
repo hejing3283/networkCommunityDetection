@@ -116,6 +116,8 @@ private:
   // Additional private matrices
   gauMatrix _gMatrix;
   binMatrix _bMatrix;
+  // Edit
+  Eigen::MatrixXd _eigen_phi_bar;
   // Edits
 
 
