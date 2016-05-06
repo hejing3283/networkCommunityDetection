@@ -1132,28 +1132,67 @@ FastAMM2::opt_process(NodeMap &nodes,
     _eta_gau[i] = eta_gau_temp(i);
   // Calculate eta_G
 
-  // Calculate grad_delta_gau
-  // double grad_delta_gau = 0;
-  double grad_delta_gau_common = 0;
-  double _delta_gau_squared = pow(_delta_gau, 2);
-  // To prevent overloading
-  Eigen::MatrixXd t_1_g = eta_gau_temp.transpose() * eigen_phi_bar;
-  Eigen::MatrixXd t_2_g = eta_gau_temp.transpose() * eigen_phi_bar.asDiagonal() * eta_gau_temp;
-  for (uint32_t i = 0; i < _n; ++i){
-    for (uint32_t j = 0; j < _gau; ++j){
-  //      grad_delta_gau += - (double) 1.0/(2 * _delta_gau);
-      grad_delta_gau_common += pow(_network.get_gau(i, j),2) / (4 * _delta_gau_squared) -
-                         (double) 1.0/_delta_gau_squared *
-                   (t_1_g(0,0) * _network.get_gau(i, j) - 0.5 * t_2_g(0,0));
+  // Create func_gau_delta to be passed into alglib
+  void func_gau_delta(const double &x, double &func_g_d, double &grad_d_g, void *ptr){
+    grad_d_g = _n * _gau * - 1.0/(2 * x);
+    grad_delta_gau_common; // TO DO: Not sure if this is right
+    for (uint32_t i = 0; i < _n; ++i){
+      for (uint32_t j = 0; j < _gau; ++j){
+          // TO DO: Change eigen_phi_bar
+          // To prevent overloading
+          Eigen::MatrixXd t_1_g = eta_gau_temp.transpose() * eigen_phi_bar;
+          Eigen::MatrixXd t_2_g = eta_gau_temp.transpose() * eigen_phi_bar.asDiagonal() * eta_gau_temp;
+          gau_delta_gau_common += pow(_network.get_gau(i, j),2) / (4 * pow(x, 2)) -
+                                  1.0/_delta_gau_squared *
+                                  (t_1_g(0,0) * _network.get_gau(i, j) - 0.5 * t_2_g(0,0));
+      }
     }
+    grad_d_g += grad_delta_gau_common;
+    // Invert as descent
+    grad_d_g = -grad_d_g
+    func_g_d = -(-0.5 * _n * _gau * log(2 * M_PI * x) + gau_delta_common);
   }
-  // Add common terms
-  double grad_delta_gau = _n * _gau* - (double) 1.0/(2 * _delta_gau) + grad_delta_gau_common;
-  // Calculate grad_delta_gau
 
-  // Calculate el_gau
-  double el_gau = -0.5 * _n * _gau * log(2 * M_PI * _delta_gau) + grad_delta_gau_common;
-  // Calculate el_gau
+  // Create func_bin to be passed into alglib, optimize eta and delta
+  // void func_bin(const Array &x, double &func_b, Array &grad_b, void *ptr){
+  //   grad_b[0];
+  //   funct_b; // TO DO: Not sure if this is right
+  //   for (uint32_t i = 0; i < _n; ++i){
+  //    for (uint32_t j = 0; j < _bin; ++j){
+  //       double t_2_exped = -(x[0].transpose() * eigen_phi_bar);
+  //       double t_2_eta_bin = eigen_phi_bar / (1 + exp(t_2_exped));
+  //       double t_2_el_bin = -log(1 + exp(-t_2_exped));
+  //       grad_b[0] += eigen_phi_bar * _network.get_bin(i, j) - t_2_eta_bin;
+  //       func_b += -t_2_exped * _network.get_bin(i, j) + t_2_el_bin;
+  //     }
+  //   }
+  //   grad_b[0] /= x[1];
+  //   func_b /= x[1];
+  //   grad_b[1] = func_b / x[1];
+  // }
+
+  // // Calculate grad_delta_gau
+  // // double grad_delta_gau = 0;
+  // double grad_delta_gau_common = 0;
+  // double _delta_gau_squared = pow(_delta_gau, 2);
+  // // To prevent overloading
+  // Eigen::MatrixXd t_1_g = eta_gau_temp.transpose() * eigen_phi_bar;
+  // Eigen::MatrixXd t_2_g = eta_gau_temp.transpose() * eigen_phi_bar.asDiagonal() * eta_gau_temp;
+  // for (uint32_t i = 0; i < _n; ++i){
+  //   for (uint32_t j = 0; j < _gau; ++j){
+  // //      grad_delta_gau += - (double) 1.0/(2 * _delta_gau);
+  //     grad_delta_gau_common += pow(_network.get_gau(i, j),2) / (4 * _delta_gau_squared) -
+  //                        (double) 1.0/_delta_gau_squared *
+  //                  (t_1_g(0,0) * _network.get_gau(i, j) - 0.5 * t_2_g(0,0));
+  //   }
+  // }
+  // // Add common terms
+  // double grad_delta_gau = _n * _gau* - (double) 1.0/(2 * _delta_gau) + grad_delta_gau_common;
+  // // Calculate grad_delta_gau
+
+  // // Calculate el_gau
+  // double el_gau = -0.5 * _n * _gau * log(2 * M_PI * _delta_gau) + grad_delta_gau_common;
+  // // Calculate el_gau
 
 //  // Calculate grad_eta_bin
 //  double grad_eta_bin = 0;
