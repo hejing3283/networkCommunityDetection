@@ -960,9 +960,6 @@ FastAMM2::opt_process(NodeMap &nodes,
   uint32_t l_size = 0;
 
   // Edit
-  // Create phi_bar
-  Array phi_sum = Array(_k);
-  phi_sum.zero();
   // Accumulate number of nodes seen
   uint32_t normalize_size = 0;
   // Edit
@@ -1106,30 +1103,42 @@ FastAMM2::opt_process(NodeMap &nodes,
 
   // Edit
 
-  // Calculate eta_G
-  // Convert phi_sum to Eigen Matrix
-  Eigen::MatrixXd eigen_phi_bar(_k, 1) ;
-  for (uint32_t i = 0; i < _k; ++i)
-    eigen_phi_bar(i) = phi_sum.data()[i] / normalize_size;
 
-//  Eigen::MatrixXd eigen_phi_bar(_k, 1);
-//  eigen_phi_bar = eigen_phi_sum / _total_pairs_sampled;
+  // Calculate eta_gau
+  Eigen::MatrixXd eigen_phi_bar(_n, _k) ;
+  for (uint32_t i = 0; i < _n; ++i){
+    for (uint32_t j = 0; j < _k; ++i){
+      if (i == _start_node){
+        eigen_phi_bar(i, j) = _gammat[i][j] / normalize_size;
+      }
+      else{
+      eigen_phi_bar(i, j) = _gammat[i][j];
+      }
+    }
+  }
 
   Eigen::MatrixXd eta_g_top = Eigen::MatrixXd::Zero(_k, 1);
   for (uint32_t i = 0; i < _n; ++i){
     for (uint32_t j = 0; j < _gau; ++j){
-      eta_g_top += _network.get_gau(i, j) * eigen_phi_bar;
+      eta_g_top += _network.get_gau(i, j) * eigen_phi_bar(i, j);
+    }
+  }
+
+  // Invert _gammat
+  Eigen::MatrixXd _gammat_invert = Eigen::MatrixXd::Zero(_n, _k);
+  for (uint32_t i = 0; i < _n; ++i){
+    for (uint32_t j = 0; j < _gau; ++j){
+      _gammat_invert(i, j) = 1.0 / eigen_phi_bar(i, j);
     }
   }
 
   Eigen::MatrixXd eta_g_bot = Eigen::MatrixXd::Zero(_k, _k);
-  eta_g_bot += _gau *_n * eigen_phi_bar.asDiagonal();
+  for (uint32_t i = 0; i < _n; ++i){
+    eta_g_bot += _gau * _gammat_invert.row(i).asDiagonal();
+  }
 
-  // Change Eigen Matrix back to D1Array
   Eigen::MatrixXd eta_gau_temp(_k, 1);
-  eta_gau_temp = eta_g_top * eta_g_bot;
-  for (uint32_t i = 0; i < _k; ++i)
-    _eta_gau[i] = eta_gau_temp(i);
+  eta_gau_temp = eta_g_bot * eta_g_top;
   // Calculate eta_G
 
   // Create func_gau_delta to be passed into alglib
@@ -1138,10 +1147,9 @@ FastAMM2::opt_process(NodeMap &nodes,
     grad_delta_gau_common; // TO DO: Not sure if this is right
     for (uint32_t i = 0; i < _n; ++i){
       for (uint32_t j = 0; j < _gau; ++j){
-          // TO DO: Change eigen_phi_bar
           // To prevent overloading
-          Eigen::MatrixXd t_1_g = eta_gau_temp.transpose() * eigen_phi_bar;
-          Eigen::MatrixXd t_2_g = eta_gau_temp.transpose() * eigen_phi_bar.asDiagonal() * eta_gau_temp;
+          Eigen::MatrixXd t_1_g = eta_gau_temp.transpose() * eigen_phi_bar.row(i);
+          Eigen::MatrixXd t_2_g = eta_gau_temp.transpose() * eigen_phi_bar.row(i).asDiagonal() * eta_gau_temp;
           gau_delta_gau_common += pow(_network.get_gau(i, j),2) / (4 * pow(x, 2)) -
                                   1.0/_delta_gau_squared *
                                   (t_1_g(0,0) * _network.get_gau(i, j) - 0.5 * t_2_g(0,0));
@@ -1153,23 +1161,23 @@ FastAMM2::opt_process(NodeMap &nodes,
     func_g_d = -(-0.5 * _n * _gau * log(2 * M_PI * x) + gau_delta_common);
   }
 
-  // Create func_bin to be passed into alglib, optimize eta and delta
-  // void func_bin(const Array &x, double &func_b, Array &grad_b, void *ptr){
-  //   grad_b[0];
-  //   funct_b; // TO DO: Not sure if this is right
-  //   for (uint32_t i = 0; i < _n; ++i){
-  //    for (uint32_t j = 0; j < _bin; ++j){
-  //       double t_2_exped = -(x[0].transpose() * eigen_phi_bar);
-  //       double t_2_eta_bin = eigen_phi_bar / (1 + exp(t_2_exped));
-  //       double t_2_el_bin = -log(1 + exp(-t_2_exped));
-  //       grad_b[0] += eigen_phi_bar * _network.get_bin(i, j) - t_2_eta_bin;
-  //       func_b += -t_2_exped * _network.get_bin(i, j) + t_2_el_bin;
-  //     }
-  //   }
-  //   grad_b[0] /= x[1];
-  //   func_b /= x[1];
-  //   grad_b[1] = func_b / x[1];
-  // }
+  Create func_bin to be passed into alglib, optimize eta and delta
+  void func_bin(const Array &x, double &func_b, Array &grad_b, void *ptr){
+    grad_b[0];
+    funct_b; // TO DO: Not sure if this is right
+    for (uint32_t i = 0; i < _n; ++i){
+     for (uint32_t j = 0; j < _bin; ++j){
+        double t_2_exped = -(x[0].transpose() * eigen_phi_bar.row(i));
+        double t_2_eta_bin = eigen_phi_bar.row(i) / (1 + exp(t_2_exped));
+        double t_2_el_bin = log(1 + exp(-t_2_exped));
+        grad_b[0] += eigen_phi_bar.row(i) * _network.get_bin(i, j) - t_2_eta_bin;
+        func_b += -t_2_exped * _network.get_bin(i, j) - t_2_el_bin;
+      }
+    }
+    grad_b[0] = - grad_b[0] / x[1];
+    func_b = - func_b / x[1];
+    grad_b[1] = func_b / x[1];
+  }
 
   // // Calculate grad_delta_gau
   // // double grad_delta_gau = 0;
@@ -1326,7 +1334,7 @@ FastAMM2::opt_process_noninf(NodeMap &nodes,
       for (uint32_t t = 0; t < _t; ++t)
 	ldt[k][t] += phi1[k] * phi2[k] * (t == 0 ? y : (1-y));
   }
-    // Edit
+  // Edit
 
   // Calculate eta_G
   // Convert phi_sum to Eigen Matrix
