@@ -136,16 +136,16 @@ PhiCompute::update_phis(bool is_phi1, Eigen::MatrixXd _eta_gau, Eigen::MatrixXd 
 		for (uint32_t i = 0; i < _env.dgau; ++i) {
 		  v += (_net.get_gau(c, i) * eta_g_k) / (_env.n * _env.delta_gau)
 				- (eta_g_k * eta_g_k) / (2.0 * _env.n * _env.delta_gau);
-	}
+	   }
 
-	double eta_b_k = _eta_bin(_k, 1);
-	if ( _env.dbin > 0){
-			for (uint32_t i = 0; i < _env.dbin; ++i) {
-			  double to_exp = _eta_bin.transpose() * _eigen_phi_bar.row(i);
-			  double exped = exp(to_exp);
-				w += (_net.get_gau(c, i) * eta_b_k) / (_env.n * _env.delta_bin)
-					- (eta_b_k * exped) / (exped * _env.delta_bin);
-	}
+    double eta_b_k = _eta_bin(_k, 1);
+    if ( _env.dbin > 0){
+      for (uint32_t i = 0; i < _env.dbin; ++i) {
+	   		double to_exp = _eta_bin.transpose() * _eigen_phi_bar.row(i);
+	   		double exped = exp(to_exp);
+	   		w += (_net.get_gau(c, i) * eta_b_k) / (_env.n * _env.delta_bin)
+	   				- (eta_b_k * exped) / (exped * _env.delta_bin);
+	   }
 
 //    }else if(_env.dgau == 0 & _env.dbin > 0){
 //    	v = .0; // TODO: update using only  binary local updates, eq. 53 & 54
@@ -295,7 +295,8 @@ private:
 
   double edge_likelihood(uint32_t p, uint32_t q, yval_t y) const;
   // Edit
-  double attribute_likelihood(Eigen::MatrixXd _eigen_phi_bar, Eigen::MatrixXd _eta_gau, double _delta_gau) const;
+  double attribute_likelihood_gau(Eigen::MatrixXd _eigen_phi_bar, Eigen::MatrixXd _eta_gau, double _delta_gau) const;
+  double attribute_likelihood_bin(Eigen::MatrixXd _eigen_phi_bar, Eigen::MatrixXd _eta_bin, double _delta_bin) const;
   // Edit
   double estimate_bernoulli_rate(uint32_t k) const;
 
@@ -655,23 +656,20 @@ FastAMM2::attribute_likelihood_gau(Eigen::MatrixXd _eigen_phi_bar, Eigen::Matrix
 }
 
 inline double
-FastAMM2::attribute_likelihood_bin(Eigen::MatrixXd _eigen_phi_bar, Eigen::MatrixXd _eta_gau, double _delta_gau) const
+FastAMM2::attribute_likelihood_bin(Eigen::MatrixXd _eigen_phi_bar, Eigen::MatrixXd _eta_bin, double _delta_bin) const
 {
-  double a_l = 0.5 * _n * _gau * log(2 * M_PI * _delta_gau);
   Eigen::MatrixXd z_n = Eigen::MatrixXd::Zero(_k, 1);
   for (uint32_t i = 0; i < _n; ++i){
     z_n += _eigen_phi_bar.row(i) / _n;
   }
-  double a_l_acc = 0;
+  double a_l = 0;
   for (uint32_t i = 0; i < _n; ++i){
       for (uint32_t j = 0; j < _gau; ++j){
-        double x = _network.get_gau(i, j);
-        double t_1 = _eta_gau.transpose() * z_n;
-        double t_2 = _eta_gau.transpose() * z_n * z_n.transpose() * _eta_gau;
-        a_l_acc += -pow(x, 2)/2 + x * t_1 - t_2/2;
+        double t_1 = _eta_bin.transpose() * z_n;
+        a_l_acc += t_1 * _network.get_gau(i, j) - log(1 + exp(t_1));
     }
   }
-  return (a_l + a_l_acc/_delta_gau) ;
+  return (a_l / _delta_bin) ;
 }
 // Edit
 

@@ -1591,9 +1591,9 @@ FastAMM2::heldout_likelihood()
     double u = edge_likelihood(p,q,y);
     s += u;
     //edits
-    u = attributes_likelihood(p);
+    // u = attributes_likelihood(p);
     s += u;
-    u = attributes_likelihood(q);
+    // u = attributes_likelihood(q);
     s += u;
     //edits
     k += 1;
@@ -1616,7 +1616,11 @@ FastAMM2::heldout_likelihood()
   fflush(_hf);
 
   // Use hol @ network sparsity as stopping criteria
-  double a = nshol + attribute_likelihood(_eigen_phi_bar, _eta_gau, _delta_gau);
+  double a = nshol
+  if (_gau)
+    a += attribute_likelihood(_eigen_phi_bar, _eta_gau, _delta_gau);
+  if (_bin)
+    a += attribute_likelihood_bin(_eigen_phi_bar, _eta_bin, _delta_bin)
 
   bool stop = false;
   int why = -1;
