@@ -254,6 +254,7 @@ public:
   void set_dir_exp(uint32_t a, const Matrix &u, Matrix &exp);
 
   void func_gau_delta(const alglib::real_1d_array &x, double &func_g_d, alglib::real_1d_array &grad_d_g, void *ptr){
+    
     grad_d_g[0] = _n * _gau * 1.0/(2 * x[0]);
     Eigen::MatrixXd t_1_g = _eta_gau.transpose() * _eigen_phi_bar.row(0);
     Eigen::MatrixXd t_2_g = _eta_gau.transpose() * _eigen_phi_bar.row(0).asDiagonal() * _eta_gau;

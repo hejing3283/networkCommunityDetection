@@ -830,6 +830,7 @@ LinkSampling::infer()
     alglib::real_1d_array x_g_d;
     alglib::minlbfgsstate state;
     alglib::minlbfgsreport rep;
+    fprintf(stderr, "Running: %d\n", _iter);
     if (_iter == 1){
       double tmp[] = {_delta_gau};
       x_g_d.setcontent(1,tmp);

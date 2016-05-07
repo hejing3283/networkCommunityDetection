@@ -137,7 +137,7 @@ private:
   uint32_t _k;
   uint32_t _t;
   uint32_t _s;
-  uint32_t _iter;
+  uint32_t _iter = 0;
   Array _alpha;
   Array _beta;
   Matrix _eta;

@@ -1196,6 +1196,7 @@ FastAMM2::opt_process(NodeMap &nodes,
   alglib::real_1d_array x_g_d;
   alglib::minlbfgsstate state;
   alglib::minlbfgsreport rep;
+  fprintf(stderr, "Running: %d\n", _iter);
   if (_iter == 1){
     double tmp[] = {_delta_gau};
     x_g_d.setcontent(1, tmp);
@@ -1556,13 +1557,17 @@ FastAMM2::approx_log_likelihood()
 double
 FastAMM2::heldout_likelihood()
 {
-  printf("FastAMM2::heldout_likelihood()\n");
-  fflush(stdout);
+  fprintf(stderr, "here\n");
+  fprintf(stderr, "FastAMM2::heldout_likelihood()\n");
+  // fflush(stdout);
   uint32_t k = 0, kzeros = 0, kones = 0;
   double s = .0, szeros = 0, sones = 0;
+  fprintf(stderr, "here\n");
+  // fflush(stdout);
   for (SampleMap::const_iterator i = _heldout_map.begin();
        i != _heldout_map.end(); ++i) {
 
+    fprintf(stderr, "here\n");
     const Edge &e = i->first;
     uint32_t p = e.first;
     uint32_t q = e.second;
