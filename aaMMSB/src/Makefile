@@ -262,7 +262,6 @@ include ./$(DEPDIR)/fastamm.Po
 include ./$(DEPDIR)/fastamm2.Po
 include ./$(DEPDIR)/fastinit.Po
 include ./$(DEPDIR)/linksampling.Po
-include ./$(DEPDIR)/optimization.Po
 include ./$(DEPDIR)/log.Po
 include ./$(DEPDIR)/main.Po
 include ./$(DEPDIR)/mmsbgen.Po

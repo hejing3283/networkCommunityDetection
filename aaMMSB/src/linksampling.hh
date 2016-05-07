@@ -39,29 +39,25 @@ public:
   //edits:
 //  void func_gau_delta(const real_1d_array &x,double &func_gdcommon,  double &func_g_d, double &grad_d_g, void *ptr);
   //edits
-  static void func_gau_delta(Env _env, Network _network, LinkSampling _linksample,
-		  const real_1d_array &x,double &func_gdcommon, double &func_g_d, double &grad_d_g, void *ptr)  {
+  static void func_gau_delta( const real_1d_array &x,double &func_g_d, double &grad_d_g, void *ptr)  {
           grad_d_g = _env.n * _env.dgau * 1.0/(2 * x[0]);
-          Eigen::MatrixXd t_1_g = _linksample._eta_gau.transpose() * _linksample._eigen_phi_bar.row(0);
-          Eigen::MatrixXd t_2_g = _linksample._eta_gau.transpose() * _linksample._eigen_phi_bar.row(0).asDiagonal() * _linksample._eta_gau;
-
-          func_gdcommon = -1.0 * pow(_network.get_gau(0, 0),2) / (4 * pow(x[0], 2)) +
-                                     (1.0 / pow(x[0], 2)) *
-                                     (t_1_g(0,0) * _network.get_gau(0, 0) - 0.5 * t_2_g(0,0));
+          func_g_d = 0.5 * _env.n * _env.dgau * log(2 * M_PI * x[0]) ;
+          Eigen::MatrixXd t_1_g = _eta_gau.transpose() * _eigen_phi_bar.row(0);
+          Eigen::MatrixXd t_2_g = _eta_gau.transpose() * _eigen_phi_bar.row(0).asDiagonal() * _eta_gau;
+//          double &func_gdcommon;
           for (uint32_t i = 0; i < _env.n; ++i){
             for (uint32_t j = 0; j < _env.dgau; ++j){
-                if (i != 0 && j != 0){
                   // To prevent overloading
-                  Eigen::MatrixXd t_1_g = _linksample._eta_gau.transpose() * _linksample._eigen_phi_bar.row(i);
-                  Eigen::MatrixXd t_2_g = _linksample._eta_gau.transpose() * _linksample._eigen_phi_bar.row(i).asDiagonal() * _linksample._eta_gau;
-                  func_gdcommon += - pow(_network.get_gau(i, j),2) / (4 * pow(x[0], 2)) +
-                                        (1.0/ pow(x[0], 2))  *
-                                        (t_1_g(0,0) * _network.get_gau(i, j) - 0.5 * t_2_g(0,0));
-              }
+                  Eigen::MatrixXd t_1_g = _eta_gau.transpose() * _eigen_phi_bar.row(i);
+                  Eigen::MatrixXd t_2_g = _eta_gau.transpose() * _eigen_phi_bar.row(i).asDiagonal() * _eta_gau;
+                  grad_d_g += - pow(_network.get_gau(i, j),2) / (4 * pow(x[0], 2)) +
+                                (1.0/ pow(x[0], 2))  *
+                                (t_1_g(0,0) * _network.get_gau(i, j) - 0.5 * t_2_g(0,0));
+                  func_g_d -= - pow(_network.get_gau(i, j),2) / (4 * pow(x[0], 2)) +
+                          (1.0/ pow(x[0], 2))  *
+                          (t_1_g(0,0) * _network.get_gau(i, j) - 0.5 * t_2_g(0,0));
             }
           }
-          grad_d_g += func_gdcommon;
-          func_g_d = 0.5 * _env.n * _env.dgau * log(2 * M_PI * x[0]) - func_gdcommon;
      }
 
     //edits
@@ -425,5 +421,10 @@ LinkSampling::get_y(uint32_t p, uint32_t q)
   return _network.y(p,q);
 }
 
+// edits: try have a static function
+LinkSampling _lksmp;
+void (*wrapp_gau_delta())(char) {
+	return _lksmp::func_gau_delta();
+}
 #endif
 
