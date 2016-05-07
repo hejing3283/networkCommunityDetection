@@ -92,7 +92,7 @@ int main()
     if (attributes_gau.is_open()){
         for (uint32_t i = 0; i < n; ++i){
                 attributes_gau << i << "\t" << 0 << "\t" << gsl_ran_gaussian(r, var) << "\n";
-                attributes_gau << i << "\t" << 0 << "\t" << gsl_ran_gaussian(r, var) << "\n";
+                attributes_gau << i << "\t" << 1 << "\t" << gsl_ran_gaussian(r, var) << "\n";
         }
     attributes_gau.close();
     }
@@ -101,7 +101,7 @@ int main()
     if (attributes_bin.is_open()){
         for (uint32_t i = 0; i < n; ++i){
                 attributes_bin << i << "\t" << 0 << "\t" << gsl_ran_bernoulli(r, prob) << "\n";
-                attributes_bin << i << "\t" << 0 << "\t" << gsl_ran_bernoulli(r, prob) << "\n";
+                attributes_bin << i << "\t" << 1 << "\t" << gsl_ran_bernoulli(r, prob) << "\n";
         }
     attributes_bin.close();
     }

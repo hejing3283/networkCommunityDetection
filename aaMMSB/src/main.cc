@@ -4,6 +4,7 @@
 #include "sbm.hh"
 #include "mmsbinferorig.hh"
 #include "mmsbgen.hh"
+#include "linksampling.hh"
 #include "log.hh"
 #include "mmsborig.hh"
 #include "fastqueue.hh"
@@ -165,6 +166,8 @@ main(int argc, char **argv)
 
   assert (!(batch && online));
 
+  printf("about to make env\n");
+
   Env env(n, k,
 		  //edits
 		  dG,dB,
@@ -191,6 +194,8 @@ main(int argc, char **argv)
 	  link_thresh, lt_min_deg,
 	  init_comm, init_comm_fname,
 	  link_sampling, gml, findk);
+
+  printf("made env\n");
 
   env_global = &env;
   Network network(env);
@@ -220,29 +225,33 @@ main(int argc, char **argv)
   env.n = network.n() - network.singles();
 
   //edits
-  if (network.read_gau_attr(gaufname.c_str()) < 0) {
-      fprintf(stderr, "error reading %s; quitting\n", gaufname.c_str());
-      return -1;
-    }
-    info("+ gaussin attributes: dG = %d\n",network.dgau());
-
-  if (network.read_bin_attr(binfname.c_str()) < 0) {
-        fprintf(stderr, "error reading %s; quitting\n", binfname.c_str());
+  if (dG > 0) {
+    if (network.read_gau_attr(gaufname.c_str()) < 0) {
+        fprintf(stderr, "error reading %s; quitting\n", gaufname.c_str());
         return -1;
-   }
-   info("+ binary attributes: dG = %d\n", network.dbin());
+      }
+      info("+ gaussin attributes: dG = %d\n",network.dgau());
+  }
+
+  if (dB > 0) {
+    if (network.read_bin_attr(binfname.c_str()) < 0) {
+          fprintf(stderr, "error reading %s; quitting\n", binfname.c_str());
+          return -1;
+     }
+     info("+ binary attributes: dG = %d\n", network.dbin());
+  }
   //edits
 
 
   if (stratified && rnode) {
     FastAMM2 fastamm2(env, network);
-    info("+ running mmsb inference (with stratified random node option)\n");
+    info("+ running fastamm2 inference (with stratified random node option)\n");
     fastamm2.infer();
     exit(0);
   } else {
-    MMSBInfer mmsb(env, network);
-    info("+ running mmsb inference\n");
-    mmsb.infer();
+    LinkSampling linksampling(env, network);
+    info("+ running linksampling inference\n");
+    linksampling.infer();
   }
 }
 

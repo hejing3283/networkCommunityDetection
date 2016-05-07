@@ -169,28 +169,20 @@ Network::read_gau_attr(string s)
     lerr("error: cannot open file %s:%s", s.c_str(), strerror(errno));
     exit(-1);
   }
-  char b1, b2, b3;
-  uint32_t s1, s2;
-  double s3;
+  int b1, b2;
+  double b3;
   // assume the matrix is n * dGau ; n * dBin
   while (!feof(f)){
     // Checks if scan continues, refer to main
-    if (_env.strid) {
-      if (fscanf(f, "%s"DELIM"%s"DELIM"%s\n", &b1, &b2, &b3) < 0) {
-        printf("error: unexpected lines in file\n");
-        exit(-1);
-      }
-      // Cast strings into correct types
-      s1 = int(b1);
-      s2 = int(b2);
-//      s1 = _str2id[b1];
-//      s2 = _str2id[b2];
-      s3 = double(b3);
-      // Updates matrix
-      set_gau(s1, s2, s3);
+    if (fscanf(f, "%d"DELIM"%d"DELIM"%lf\n", &b1, &b2, &b3) < 0) {
+      printf("error: unexpected lines in file\n");
+      exit(-1);
     }
+    // Updates matrix
+
+    set_gau(b1, b2, b3);
   }
-  printf("Done reading Gaussian attributes.\n");
+  fprintf(stdout, "Done reading Gaussian attributes.\n");
   return 0;
 }
 
@@ -204,26 +196,17 @@ Network::read_bin_attr(string s)
     lerr("error: cannot open file %s:%s", s.c_str(), strerror(errno));
     exit(-1);
   }
-  char b1, b2, b3;
-  uint32_t s1, s2;
-  bool s3;
+  int b1, b2, b3;
 
   while (!feof(f)){
     // Checks if scan continues, refer to main
-    if (_env.strid) {
-      if (fscanf(f, "%s"DELIM"%s"DELIM"%s\n", &b1, &b2, &b3) < 0) {
-        printf("error: unexpected lines in file\n");
-        exit(-1);
-      }
-      // Cast strings into correct types
-      s1 = int(b1);
-      s2 = int(b2);
-//      s1 = _str2id(b1);
-//      s2 = _str2id(b2);
-      s3 = bool(b3);
-      // Updates matrix
-      set_bin(s1, s2, s3);
+    if (fscanf(f, "%d"DELIM"%d"DELIM"%d\n", &b1, &b2, &b3) < 0) {
+      printf("error: unexpected lines in file\n");
+      exit(-1);
     }
+    // Updates matrix
+    printf("%d, %d, %d\n", b1, b2, b3);
+    set_bin(b1, b2, b3);
   }
   printf("Done reading binary attributes.\n");
   return 0;
