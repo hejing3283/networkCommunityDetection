@@ -846,15 +846,15 @@ LinkSampling::infer()
       func_g_d = 0.5 * _n * _gau * log(2 * M_PI * x[0]) - gau_delta_common;
     }
 
+    alglib::real_1d_array x_g_d;
+    alglib::minlbfgsstate state;
+    alglib::minlbfgsreport rep;
     if (_iter == 1){
-      alglib::real_1d_array x_g_d;
       x_g_d.setcontent(1, _delta_gau);
       double epsg = 0.0000000001;
       double epsf = 0;
       double epsx = 0;
-      ae_int_t maxits = 0;
-      minlbfgsstate state;
-      minlbfgsreport rep;
+      alglib::ae_int_t maxits = 0;
 
       minlbfgscreate(1, x_g_d, state);
       minlbfgssetcond(state, epsg, epsf, epsx, maxits);
