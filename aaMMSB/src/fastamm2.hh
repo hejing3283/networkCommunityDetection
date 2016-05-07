@@ -23,6 +23,9 @@
 #include <gsl/gsl_sf_psi.h>
 #include <gsl/gsl_sf.h>
 
+#include "optimization.h"
+using namespace alglib;
+
 //#define TRAINING_SAMPLE 1
 #define COMPUTE_GROUPS 1
 //#define EGO_NETWORK 1
@@ -137,8 +140,8 @@ PhiCompute::update_phis(bool is_phi1, Eigen::MatrixXd _eta_gau, Eigen::MatrixXd 
     double eta_b_k = _eta_bin(_k, 1);
     if ( _env.dbin > 0){
       for (uint32_t i = 0; i < _env.dbin; ++i) {
-	   		double to_exp = _eta_bin.transpose() * _eigen_phi_bar.row(i);
-	   		double exped = exp(to_exp(0,0));
+	   		double to_exp = (_eta_bin.transpose() * _eigen_phi_bar.row(i))(0, 0);
+	   		double exped = exp(to_exp);
 	   		w += (_net.get_gau(c, i) * eta_b_k) / (_env.n * _env.delta_bin)
 	   				- (eta_b_k * exped) / (_env.n * _env.delta_bin * (1 + exped));
 	   }
@@ -204,8 +207,8 @@ PhiCompute::update_phis_until_conv()
       debug("_phi1old = %s", _phi1old.s().c_str());
       debug("_phi2old = %s", _phi2old.s().c_str());
     }
-    update_phis(true, _eta_gau, _eta_bin, _eigen_phi_bar);
-    update_phis(false, _eta_gau, _eta_bin, _eigen_phi_bar);
+    update_phis(true, _env.eta_gau, _env.eta_bin, _env.eigen_phi_bar);
+    update_phis(false, _env.eta_gau, _env.eta_bin, _env.eigen_phi_bar);
 
     debug("_phinext1 = %s", _phinext1.s().c_str());
     debug("_phinext2 = %s", _phinext2.s().c_str());
@@ -249,6 +252,29 @@ public:
 
   void set_dir_exp(const Matrix &u, Matrix &exp);
   void set_dir_exp(uint32_t a, const Matrix &u, Matrix &exp);
+
+  void func_gau_delta(const real_1d_array &x, double &func_g_d, real_1d_array &grad_d_g, void *ptr){
+    grad_d_g[0] = _n * _gau * 1.0/(2 * x[0]);
+    Eigen::MatrixXd t_1_g = _eta_gau.transpose() * _eigen_phi_bar.row(0);
+    Eigen::MatrixXd t_2_g = _eta_gau.transpose() * _eigen_phi_bar.row(0).asDiagonal() * _eta_gau;
+    double grad_delta_gau_common = - pow(_network.get_gau(0, 0),2) / (4 * pow(x[0], 2)) +
+                               (1.0 / pow(x[0], 2)) *
+                               (t_1_g(0,0) * _network.get_gau(0, 0) - 0.5 * t_2_g(0,0));
+    for (uint32_t i = 0; i < _n; ++i){
+      for (uint32_t j = 0; j < _gau; ++j){
+          if (i != 0 && j != 0){
+            // To prevent overloading
+            Eigen::MatrixXd t_1_g = _eta_gau.transpose() * _eigen_phi_bar.row(i);
+            Eigen::MatrixXd t_2_g = _eta_gau.transpose() * _eigen_phi_bar.row(i).asDiagonal() * _eta_gau;
+            grad_delta_gau_common += - pow(_network.get_gau(i, j),2) / (4 * pow(x[0], 2)) +
+                                  (1.0/ pow(x[0], 2))  *
+                                  (t_1_g(0,0) * _network.get_gau(i, j) - 0.5 * t_2_g(0,0));
+        }
+      }
+    }
+    grad_d_g[0] += grad_delta_gau_common;
+    func_g_d = 0.5 * _n * _gau * log(2 * M_PI * x[0]) - grad_delta_gau_common; // TODO: not sure what this minus should be
+  }
 
 private:
   void init_heldout();
@@ -342,6 +368,10 @@ private:
 	       uint32_t top_k, uint32_t depth);
   uint32_t most_likely_group(uint32_t p);
 #endif
+
+  static void grad(const real_1d_array &x,double &func_g_d, real_1d_array &grad_d_g, void *ptr){
+    ((FastAMM2 *)(ptr))->func_gau_delta(x, func_g_d, grad_d_g, NULL);
+  }
 
   Env &_env;
   Network &_network;
@@ -639,8 +669,8 @@ FastAMM2::attribute_likelihood_gau(Eigen::MatrixXd _eigen_phi_bar, Eigen::Matrix
   for (uint32_t i = 0; i < _n; ++i){
       for (uint32_t j = 0; j < _gau; ++j){
         double x = _network.get_gau(i, j);
-        double t_1 = _eta_gau.transpose() * z_n;
-        double t_2 = _eta_gau.transpose() * z_n * z_n.transpose() * _eta_gau;
+        double t_1 = (_eta_gau.transpose() * z_n).value();
+        double t_2 = (_eta_gau.transpose() * z_n * z_n.transpose() * _eta_gau).value();
         a_l_acc += -pow(x, 2)/2 + x * t_1 - t_2/2;
     }
   }
@@ -657,7 +687,7 @@ FastAMM2::attribute_likelihood_bin(Eigen::MatrixXd _eigen_phi_bar, Eigen::Matrix
   double a_l = 0;
   for (uint32_t i = 0; i < _n; ++i){
       for (uint32_t j = 0; j < _gau; ++j){
-        double t_1 = _eta_bin.transpose() * z_n;
+        double t_1 = (_eta_bin.transpose() * z_n).value();
         a_l += t_1 * _network.get_gau(i, j) - log(1 + exp(t_1));
     }
   }
@@ -732,7 +762,7 @@ FastAMM2::attributes_likelihood(uint32_t p ) const
 		   uu +=  pi_p[k] * ones[k] ; // TODO: double check x_{n,i} * \eta^T * \bar{z}_n dimension;
 		  uu += uu * _network.get_gau(p,i);
 		  for ( uint32_t k = 0; k < _k; ++k)
-			  uu +=  _env.eta_gau[k] * zeros[k] * ones[k] * _env.eta_gau[k] ; // TODO: double check \eta^T * z * z^T * \eta;
+			  uu +=  _env.eta_gau(k) * zeros[k] * ones[k] * _env.eta_gau(k) ; // TODO: double check \eta^T * z * z^T * \eta;
 		  u += uu / _env.delta_gau;
 	  }
   }
@@ -747,7 +777,7 @@ FastAMM2::attributes_likelihood(uint32_t p ) const
 	 		   uu +=  pi_p[k] * ones[k] ; // TODO: double check x_{n,i} * \eta^T * \bar{z}_n dimension;
 	 		  uu += uu * _network.get_bin(p,i);
 	 		  for ( uint32_t k = 0; k < _k; ++k)
-	 			  uu +=  _env.eta_bin[k] * zeros[k] * ones[k] * _env.eta_bin[k] ; // TODO: double check \eta^T * z * z^T * \eta;
+	 			  uu +=  _env.eta_bin(k) * zeros[k] * ones[k] * _env.eta_bin(k) ; // TODO: double check \eta^T * z * z^T * \eta;
 	 		  u += uu / _env.delta_bin;
 	 	  }
   }

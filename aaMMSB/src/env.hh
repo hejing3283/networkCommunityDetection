@@ -133,6 +133,7 @@ public:
   Eigen::MatrixXd eta_bin;
   double delta_gau;
   Eigen::MatrixXd eta_gau;
+  Eigen::MatrixXd eigen_phi_bar;
   //edit
 
   double eta0;

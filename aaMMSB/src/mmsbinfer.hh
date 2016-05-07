@@ -24,7 +24,7 @@
 // bool operator==(const Edge &a, const Edge &b);
 class PhiComp {
 public:
-  PhiComp(const Env &env, const uint32_t &iter,
+  PhiComp(const Env &env, /* Edits */Network &net, /* Edits */const uint32_t &iter,
 	  uint32_t n, uint32_t k, uint32_t t,
 	  //edits
 	  uint32_t dg, uint32_t db,
@@ -32,7 +32,7 @@ public:
 	  const Matrix &Elogpi, 
 	  const Matrix &Elogbeta,
 	  Array &Elogf, bool phifix = false)
-    : _env(env), _iter(iter),
+    : _env(env), /* Edits */_net(net), /* Edits */_iter(iter),
       _n(n), _k(k), _t(t), 
 	  //edits
 	  _dgau(dg),_dbin(db),
@@ -69,6 +69,7 @@ public:
 
 private:
   const Env &_env;
+  Network &_net;
   const uint32_t &_iter;
   
   uint32_t _n;
@@ -272,7 +273,7 @@ public:
 	 //edits
      _family(family),
      _Elogf(k),
-	 _pcomp(env, iter, n, k, t,
+	 _pcomp(env, network, iter, n, k, t,
 			 //edits
 			 dg, db,
 			 //edits

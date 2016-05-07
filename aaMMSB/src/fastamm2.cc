@@ -1143,28 +1143,7 @@ FastAMM2::opt_process(NodeMap &nodes,
   // Calculate eta_G
 
   // Create func_gau_delta to be passed into alglib
-  void func_gau_delta(const real_1d_array &x, double &func_g_d, double &grad_d_g, void *ptr){
-    grad_d_g = _n * _gau * 1.0/(2 * x[0]);
-    Eigen::MatrixXd t_1_g = _eta_gau.transpose() * _eigen_phi_bar.row(0);
-    Eigen::MatrixXd t_2_g = _eta_gau.transpose() * _eigen_phi_bar.row(0).asDiagonal() * _eta_gau;
-    grad_delta_gau_common = - pow(_network.get_gau(i, j),2) / (4 * pow(x[0], 2)) +
-                               (1.0 / pow(x[0], 2)) *
-                               (t_1_g(0,0) * _network.get_gau(i, j) - 0.5 * t_2_g(0,0));
-    for (uint32_t i = 0; i < _n; ++i){
-      for (uint32_t j = 0; j < _gau; ++j){
-          if (i != 0 && j != 0){
-            // To prevent overloading
-            Eigen::MatrixXd t_1_g = _eta_gau.transpose() * _eigen_phi_bar.row(i);
-            Eigen::MatrixXd t_2_g = _eta_gau.transpose() * _eigen_phi_bar.row(i).asDiagonal() * _eta_gau;
-            gau_delta_gau_common += - pow(_network.get_gau(i, j),2) / (4 * pow(x[0], 2)) +
-                                  (1.0/ pow(x[0], 2))  *
-                                  (t_1_g(0,0) * _network.get_gau(i, j) - 0.5 * t_2_g(0,0));
-        }
-      }
-    }
-    grad_d_g += grad_delta_gau_common;
-    func_g_d = 0.5 * _n * _gau * log(2 * M_PI * x[0]) - gau_delta_common;
-  }
+  
 
   // // Create func_bin to be passed into alglib, optimize eta
   // void func_bin_eta(const real_1d_array &x, double &func_b, double &grad_b, void *ptr){
@@ -1214,33 +1193,35 @@ FastAMM2::opt_process(NodeMap &nodes,
   // }
 
   // TO DO: Run L-BFGS
+  real_1d_array x_g_d;
+  minlbfgsstate state;
+  minlbfgsreport rep;
   if (_iter == 1){
-    real_1d_array x_g_d;
-    x_g_d.setcontent(1, _delta_gau);
+    double tmp[] = {_delta_gau};
+    x_g_d.setcontent(1, tmp);
     double epsg = 0.0000000001;
     double epsf = 0;
     double epsx = 0;
-    ae_int_t maxits = 0;
-    minlbfgsstate state;
-    minlbfgsreport rep;
+    alglib::ae_int_t maxits = 0;
 
     minlbfgscreate(1, x_g_d, state);
     minlbfgssetcond(state, epsg, epsf, epsx, maxits);
-    alglib::minlbfgsoptimize(state, function_gau_delta);
+    alglib::minlbfgsoptimize(state, FastAMM2::grad, NULL, (void *)this);
     minlbfgsresults(state, x_g_d, rep);
 
-    _delta_gau = &x_g_d.getcontent();
+    _delta_gau = *x_g_d.getcontent();
   }
   else {
-    x_g_d.setcontent(1, _delta_gau);
+    double tmp[] = {_delta_gau};
+    x_g_d.setcontent(1, tmp);
     minlbfgsrestartfrom(state, x_g_d);
-    alglib::minlbfgsoptimize(state, function1_gau_delta);
+    alglib::minlbfgsoptimize(state, FastAMM2::grad, NULL, (void *)this);
     minlbfgsresults(state, x_g_d, rep);
 
-    _delta_gau = &x_g_d.getcontent();
+    _delta_gau = *x_g_d.getcontent();
   }
   // Edit
-  }
+  
 }
 
 void
@@ -1369,7 +1350,7 @@ FastAMM2::opt_process_noninf(NodeMap &nodes,
   Eigen::MatrixXd eta_gau_temp(_k, 1);
   eta_gau_temp = eta_g_top * eta_g_bot;
   for (uint32_t i = 0; i < _k; ++i)
-    _eta_gau[i] = eta_gau_temp(i);
+    _eta_gau(i) = eta_gau_temp(i);
   // Calculate eta_G
 
   // Calculate grad_delta_gau
@@ -1616,12 +1597,12 @@ FastAMM2::heldout_likelihood()
   fflush(_hf);
 
   // Use hol @ network sparsity as stopping criteria
-  double a = nshol
+  double a = nshol;
   // Edit
   if (_gau)
-    a += attribute_likelihood(_eigen_phi_bar, _eta_gau, _delta_gau);
+    a += attribute_likelihood_gau(_eigen_phi_bar, _eta_gau, _delta_gau);
   if (_bin)
-    a += attribute_likelihood_bin(_eigen_phi_bar, _eta_bin, _delta_bin)
+    a += attribute_likelihood_bin(_eigen_phi_bar, _eta_bin, _delta_bin);
   // Edit
 
   bool stop = false;

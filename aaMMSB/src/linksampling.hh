@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <functional>
 
 #include "env.hh"
 #include "matrix.hh"
@@ -39,8 +40,8 @@ public:
   //edits:
 //  void func_gau_delta(const real_1d_array &x,double &func_gdcommon,  double &func_g_d, double &grad_d_g, void *ptr);
   //edits
-  void func_gau_delta( const real_1d_array &x,double &func_g_d, double &grad_d_g, void *ptr)  {
-          grad_d_g = _env.n * _env.dgau * 1.0/(2 * x[0]);
+  void func_gau_delta(const real_1d_array &x,double &func_g_d, real_1d_array &grad_d_g, void *ptr)  {
+          grad_d_g[0] = _env.n * _env.dgau * 1.0/(2 * x[0]);
           func_g_d = 0.5 * _env.n * _env.dgau * log(2 * M_PI * x[0]) ;
           Eigen::MatrixXd t_1_g = _eta_gau.transpose() * _eigen_phi_bar.row(0);
           Eigen::MatrixXd t_2_g = _eta_gau.transpose() * _eigen_phi_bar.row(0).asDiagonal() * _eta_gau;
@@ -50,7 +51,7 @@ public:
                   // To prevent overloading
                   Eigen::MatrixXd t_1_g = _eta_gau.transpose() * _eigen_phi_bar.row(i);
                   Eigen::MatrixXd t_2_g = _eta_gau.transpose() * _eigen_phi_bar.row(i).asDiagonal() * _eta_gau;
-                  grad_d_g += - pow(_network.get_gau(i, j),2) / (4 * pow(x[0], 2)) +
+                  grad_d_g[0] += - pow(_network.get_gau(i, j),2) / (4 * pow(x[0], 2)) +
                                 (1.0/ pow(x[0], 2))  *
                                 (t_1_g(0,0) * _network.get_gau(i, j) - 0.5 * t_2_g(0,0));
                   func_g_d -= - pow(_network.get_gau(i, j),2) / (4 * pow(x[0], 2)) +
@@ -115,6 +116,10 @@ private:
 
   void get_Epi(uint32_t n, Array &Epi);
   uint32_t most_likely_group(uint32_t p);
+
+  static void grad(const real_1d_array &x,double &func_g_d, real_1d_array &grad_d_g, void *ptr){
+    ((LinkSampling *)(ptr))->func_gau_delta(x, func_g_d, grad_d_g, NULL);
+  }
 
   Env &_env;
   Network &_network;
@@ -422,9 +427,9 @@ LinkSampling::get_y(uint32_t p, uint32_t q)
 }
 
 // edits: try have a static function
-LinkSampling _lksmp;
-void (*wrapp_gau_delta())(char) {
-	return &_lksmp.func_gau_delta;
-}
+// LinkSampling _lksmp;
+// void (*wrapp_gau_delta())(char) {
+// 	return &_lksmp.func_gau_delta;
+// }
 #endif
 

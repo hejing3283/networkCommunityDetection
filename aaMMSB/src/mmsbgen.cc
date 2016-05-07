@@ -10,7 +10,7 @@ MMSBGen::MMSBGen(Env &env, Network &network, bool ppc)
     _beta(_k), _gamma(_n,_k), _lambda(_k,_t),
     _curr_id(0),
     _Elogpi(_n,_k), _Elogbeta(_k,_t), _Elogf(_k),
-    _pcomp(env, _curr_id, _n, _k, _t, 0, 0, 0,
+    _pcomp(env, network, _curr_id, _n, _k, _t, 0, 0, 0, 0, 0,
 	   _Elogpi, _Elogbeta, _Elogf, true),
     _legal(0), _illegal(0),
     _lc_ppc_logpe(_k, _env.ppc_ndraws),
