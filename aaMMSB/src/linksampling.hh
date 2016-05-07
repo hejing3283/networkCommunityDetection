@@ -39,7 +39,7 @@ public:
   //edits:
 //  void func_gau_delta(const real_1d_array &x,double &func_gdcommon,  double &func_g_d, double &grad_d_g, void *ptr);
   //edits
-  static void func_gau_delta( const real_1d_array &x,double &func_g_d, double &grad_d_g, void *ptr)  {
+  void func_gau_delta( const real_1d_array &x,double &func_g_d, double &grad_d_g, void *ptr)  {
           grad_d_g = _env.n * _env.dgau * 1.0/(2 * x[0]);
           func_g_d = 0.5 * _env.n * _env.dgau * log(2 * M_PI * x[0]) ;
           Eigen::MatrixXd t_1_g = _eta_gau.transpose() * _eigen_phi_bar.row(0);
@@ -424,7 +424,7 @@ LinkSampling::get_y(uint32_t p, uint32_t q)
 // edits: try have a static function
 LinkSampling _lksmp;
 void (*wrapp_gau_delta())(char) {
-	return _lksmp::func_gau_delta();
+	return &_lksmp.func_gau_delta;
 }
 #endif
 
