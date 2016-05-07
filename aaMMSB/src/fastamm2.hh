@@ -133,20 +133,15 @@ PhiCompute::update_phis(bool is_phi1, Eigen::MatrixXd _eta_gau, Eigen::MatrixXd 
 		  v += (_net.get_gau(c, i) * eta_g_k) / (_env.n * _env.delta_gau)
 				- (eta_g_k * eta_g_k) / (2.0 * _env.n * _env.delta_gau);
 	   }
-
+    }
     double eta_b_k = _eta_bin(_k, 1);
     if ( _env.dbin > 0){
       for (uint32_t i = 0; i < _env.dbin; ++i) {
 	   		double to_exp = _eta_bin.transpose() * _eigen_phi_bar.row(i);
-	   		double exped = exp(to_exp);
+	   		double exped = exp(to_exp(0,0));
 	   		w += (_net.get_gau(c, i) * eta_b_k) / (_env.n * _env.delta_bin)
 	   				- (eta_b_k * exped) / (_env.n * _env.delta_bin * (1 + exped));
 	   }
-
-//    }else if(_env.dgau == 0 & _env.dbin > 0){
-//    	v = .0; // TODO: update using only  binary local updates, eq. 53 & 54
-//    }else if(_env.dgau > 0 & _env.dbin > 0){
-//    	v = .0; // TODO: update using both binary and local updates, eq.36,37 & 53,54,
     }
     anext[k] = elogpid[c][k] + (_Elogf[k] * b[k]) + u + v + w;
     // Edits
@@ -168,8 +163,8 @@ PhiCompute::update_phis(bool is_phi1, Eigen::MatrixXd _eta_gau, Eigen::MatrixXd 
       _phi1.copy_from(_phinext1);
     } else
       _phi2.copy_from(_phinext2);
+  	}
   }
-}
 
 inline void
 PhiCompute::compute_Elogf(uint32_t p, uint32_t q, yval_t y,
@@ -663,7 +658,7 @@ FastAMM2::attribute_likelihood_bin(Eigen::MatrixXd _eigen_phi_bar, Eigen::Matrix
   for (uint32_t i = 0; i < _n; ++i){
       for (uint32_t j = 0; j < _gau; ++j){
         double t_1 = _eta_bin.transpose() * z_n;
-        a_l_acc += t_1 * _network.get_gau(i, j) - log(1 + exp(t_1));
+        a_l += t_1 * _network.get_gau(i, j) - log(1 + exp(t_1));
     }
   }
   return (a_l / _delta_bin) ;

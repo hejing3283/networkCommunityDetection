@@ -45,6 +45,7 @@ CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 am_svinet_OBJECTS = mmsbinfer.$(OBJEXT) linksampling.$(OBJEXT) \
+		    optimization.$(OBJEXT)\
 	log.$(OBJEXT) network.$(OBJEXT) thread.$(OBJEXT) \
 	mmsbinferorig.$(OBJEXT) fastamm.$(OBJEXT) sbm.$(OBJEXT) \
 	fastamm2.$(OBJEXT) mmsbgen.$(OBJEXT) mmsborig.$(OBJEXT) \
@@ -162,6 +163,7 @@ top_builddir = ..
 top_srcdir = ..
 svinet_SOURCES = mmsbinfer.hh mmsbinfer.cc\
 	linksampling.hh	linksampling.cc\
+	optimization.h	optimization.cpp\
 	matrix.hh env.hh log.cc log.hh\
 	network.cc network.hh\
 	thread.hh thread.cc\
@@ -260,6 +262,7 @@ include ./$(DEPDIR)/fastamm.Po
 include ./$(DEPDIR)/fastamm2.Po
 include ./$(DEPDIR)/fastinit.Po
 include ./$(DEPDIR)/linksampling.Po
+include ./$(DEPDIR)/optimization.Po
 include ./$(DEPDIR)/log.Po
 include ./$(DEPDIR)/main.Po
 include ./$(DEPDIR)/mmsbgen.Po

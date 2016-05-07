@@ -839,10 +839,11 @@ LinkSampling::infer()
       ae_int_t maxits = 0;
       minlbfgsstate state;
       minlbfgsreport rep;
+      // define function
 
       minlbfgscreate(1, x_g_d, state);
       minlbfgssetcond(state, epsg, epsf, epsx, maxits);
-      alglib::minlbfgsoptimize(state, LinkSampling::func_gau_delta);
+      alglib::minlbfgsoptimize(state, func_gau_delta);
       minlbfgsresults(state, x_g_d, rep);
       _delta_gau = *x_g_d.getcontent();
     } else {
@@ -850,7 +851,7 @@ LinkSampling::infer()
       double tmp[] = {_delta_gau};
       x_g_d.setcontent(1,tmp);
       minlbfgsrestartfrom(state, x_g_d);
-      alglib::minlbfgsoptimize(state, func_gau_delta);
+      alglib::minlbfgsoptimize(state, &func_gau_delta);
       minlbfgsresults(state, x_g_d, rep);
 
       _delta_gau = *x_g_d.getcontent();
