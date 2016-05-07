@@ -29,7 +29,7 @@ MMSBInfer::MMSBInfer(Env &env, Network &network)
    _gammat(_n,_k), _szgammat(_n,_k),
    _lambdat(_k,_t), _count(_n),
    _Elogf(_k),
-   _pcomp(env, _iter, _n, _k, _t,
+   _pcomp(env, network, _iter, _n, _k, _t,
 		   //edits
 		   _dgau, _dbin,
 		   //edits
