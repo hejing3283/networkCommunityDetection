@@ -22,8 +22,7 @@
 //edits
 #include <eigen3/Eigen/Core>
 #include <math.h>
-#include "optimization.h"
-using namespace alglib;
+#include "Testing/optimization.h"
 
 //edits
 
@@ -40,7 +39,7 @@ public:
   //edits:
 //  void func_gau_delta(const real_1d_array &x,double &func_gdcommon,  double &func_g_d, double &grad_d_g, void *ptr);
   //edits
-  void func_gau_delta(const real_1d_array &x,double &func_g_d, real_1d_array &grad_d_g, void *ptr)  {
+  void func_gau_delta(const alglib::real_1d_array &x, double &func_g_d, alglib::real_1d_array &grad_d_g, void *ptr)  {
           grad_d_g[0] = _env.n * _env.dgau * 1.0/(2 * x[0]);
           func_g_d = 0.5 * _env.n * _env.dgau * log(2 * M_PI * x[0]) ;
           Eigen::MatrixXd t_1_g = _eta_gau.transpose() * _eigen_phi_bar.row(0);
@@ -117,7 +116,7 @@ private:
   void get_Epi(uint32_t n, Array &Epi);
   uint32_t most_likely_group(uint32_t p);
 
-  static void grad(const real_1d_array &x,double &func_g_d, real_1d_array &grad_d_g, void *ptr){
+  static void grad(const alglib::real_1d_array &x,double &func_g_d, alglib::real_1d_array &grad_d_g, void *ptr){
     ((LinkSampling *)(ptr))->func_gau_delta(x, func_g_d, grad_d_g, NULL);
   }
 

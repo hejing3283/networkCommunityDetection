@@ -1,13 +1,13 @@
 /* Edit */
 #include <eigen3/Eigen/Core>
-#include "optimization.h"
+// #include "optimization.h"
 #include <math.h>
 /* Edit */
 #include "fastamm2.hh"
 #include "log.hh"
 #include <sys/time.h>
 
-using namespace alglib;
+// using namespace alglib;
 
 int FastAMM2::ea = 0;
 int FastAMM2::eb = 0;
@@ -1193,9 +1193,9 @@ FastAMM2::opt_process(NodeMap &nodes,
   // }
 
   // TO DO: Run L-BFGS
-  real_1d_array x_g_d;
-  minlbfgsstate state;
-  minlbfgsreport rep;
+  alglib::real_1d_array x_g_d;
+  alglib::minlbfgsstate state;
+  alglib::minlbfgsreport rep;
   if (_iter == 1){
     double tmp[] = {_delta_gau};
     x_g_d.setcontent(1, tmp);
@@ -1204,19 +1204,19 @@ FastAMM2::opt_process(NodeMap &nodes,
     double epsx = 0;
     alglib::ae_int_t maxits = 0;
 
-    minlbfgscreate(1, x_g_d, state);
-    minlbfgssetcond(state, epsg, epsf, epsx, maxits);
+    alglib::minlbfgscreate(1, x_g_d, state);
+    alglib::minlbfgssetcond(state, epsg, epsf, epsx, maxits);
     alglib::minlbfgsoptimize(state, FastAMM2::grad, NULL, (void *)this);
-    minlbfgsresults(state, x_g_d, rep);
+    alglib::minlbfgsresults(state, x_g_d, rep);
 
     _delta_gau = *x_g_d.getcontent();
   }
   else {
     double tmp[] = {_delta_gau};
     x_g_d.setcontent(1, tmp);
-    minlbfgsrestartfrom(state, x_g_d);
+    alglib::minlbfgsrestartfrom(state, x_g_d);
     alglib::minlbfgsoptimize(state, FastAMM2::grad, NULL, (void *)this);
-    minlbfgsresults(state, x_g_d, rep);
+    alglib::minlbfgsresults(state, x_g_d, rep);
 
     _delta_gau = *x_g_d.getcontent();
   }

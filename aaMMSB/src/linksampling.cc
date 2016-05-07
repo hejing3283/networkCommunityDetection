@@ -1,14 +1,14 @@
 // Edit
 #include <eigen3/Eigen/Core>
 #include <math.h>
-#include "optimization.h"
+// #include "optimization.h"
 // Edit
 
 #include "linksampling.hh"
 #include "log.hh"
 #include <sys/time.h>
 
-using namespace alglib;
+// using namespace alglib;
 
 LinkSampling::LinkSampling(Env &env, Network &network)
   :_env(env), _network(network),
@@ -842,18 +842,18 @@ LinkSampling::infer()
       // define function
 //      void (*P) ( const real_1d_array &x,double &func_g_d, double &grad_d_g, void *ptr);
 //      P = &LinkSampling::func_gau_delta;
-      minlbfgscreate(1, x_g_d, state);
-      minlbfgssetcond(state, epsg, epsf, epsx, maxits);
+      alglib::minlbfgscreate(1, x_g_d, state);
+      alglib::minlbfgssetcond(state, epsg, epsf, epsx, maxits);
       alglib::minlbfgsoptimize(state, LinkSampling::grad, NULL, (void *)this);
-      minlbfgsresults(state, x_g_d, rep);
+      alglib::minlbfgsresults(state, x_g_d, rep);
       _delta_gau = *x_g_d.getcontent();
     } else {
       double tmp[] = {_delta_gau};
       x_g_d.setcontent(1,tmp);
-      minlbfgsrestartfrom(state, x_g_d);
+      alglib::minlbfgsrestartfrom(state, x_g_d);
       alglib::minlbfgsoptimize(state, LinkSampling::grad, NULL, (void *)this);
       //alglib::minlbfgsoptimize(state, static_cast<LinkSampling *>(this->func_gau_delta)));
-      minlbfgsresults(state, x_g_d, rep);
+      alglib::minlbfgsresults(state, x_g_d, rep);
 
       _delta_gau = *x_g_d.getcontent();
     }

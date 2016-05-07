@@ -23,8 +23,8 @@
 #include <gsl/gsl_sf_psi.h>
 #include <gsl/gsl_sf.h>
 
-#include "optimization.h"
-using namespace alglib;
+#include "Testing/optimization.h"
+// using namespace alglib;
 
 //#define TRAINING_SAMPLE 1
 #define COMPUTE_GROUPS 1
@@ -253,7 +253,7 @@ public:
   void set_dir_exp(const Matrix &u, Matrix &exp);
   void set_dir_exp(uint32_t a, const Matrix &u, Matrix &exp);
 
-  void func_gau_delta(const real_1d_array &x, double &func_g_d, real_1d_array &grad_d_g, void *ptr){
+  void func_gau_delta(const alglib::real_1d_array &x, double &func_g_d, alglib::real_1d_array &grad_d_g, void *ptr){
     grad_d_g[0] = _n * _gau * 1.0/(2 * x[0]);
     Eigen::MatrixXd t_1_g = _eta_gau.transpose() * _eigen_phi_bar.row(0);
     Eigen::MatrixXd t_2_g = _eta_gau.transpose() * _eigen_phi_bar.row(0).asDiagonal() * _eta_gau;
@@ -369,7 +369,7 @@ private:
   uint32_t most_likely_group(uint32_t p);
 #endif
 
-  static void grad(const real_1d_array &x,double &func_g_d, real_1d_array &grad_d_g, void *ptr){
+  static void grad(const alglib::real_1d_array &x,double &func_g_d, alglib::real_1d_array &grad_d_g, void *ptr){
     ((FastAMM2 *)(ptr))->func_gau_delta(x, func_g_d, grad_d_g, NULL);
   }
 
