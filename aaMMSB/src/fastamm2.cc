@@ -1,6 +1,6 @@
 /* Edit */
 #include <eigen3/Eigen/Core>
-#include "optimization.h"
+#include "Testing/optimization.h"
 #include <math.h>
 /* Edit */
 #include "fastamm2.hh"
