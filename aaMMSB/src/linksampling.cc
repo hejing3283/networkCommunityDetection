@@ -841,8 +841,6 @@ LinkSampling::infer()
       alglib::ae_int_t maxits = 0;
       
       // define function
-//      void (*P) ( const real_1d_array &x,double &func_g_d, double &grad_d_g, void *ptr);
-//      P = &LinkSampling::func_gau_delta;
       alglib::minlbfgscreate(1, x_g_d, state);
       alglib::minlbfgssetcond(state, epsg, epsf, epsx, maxits);
       alglib::minlbfgsoptimize(state, LinkSampling::grad, NULL, (void *)this);
@@ -853,7 +851,6 @@ LinkSampling::infer()
       x_g_d.setcontent(1,tmp);
       alglib::minlbfgsrestartfrom(state, x_g_d);
       alglib::minlbfgsoptimize(state, LinkSampling::grad, NULL, (void *)this);
-      //alglib::minlbfgsoptimize(state, static_cast<LinkSampling *>(this->func_gau_delta)));
       alglib::minlbfgsresults(state, x_g_d, rep);
 
       _delta_gau = *x_g_d.getcontent();
