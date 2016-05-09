@@ -7,6 +7,7 @@
 #include "linksampling.hh"
 #include "log.hh"
 #include <sys/time.h>
+#include <sstream>
 
 // using namespace alglib;
 
@@ -559,8 +560,6 @@ LinkSampling::compute_mean_indicators()
   }
 }
 
-// Create func_gau_delta to be passed into alglibvoid
-
 void
 LinkSampling::clear()
 {
@@ -586,7 +585,6 @@ LinkSampling::infer()
   double **fmapd = _fmap.data();
 
   while (1) {
-
     if (_env.max_iterations && _iter > _env.max_iterations) {
       printf("+ Quitting: reached max iterations.\n");
       Env::plog("maxiterations reached", true);
@@ -648,8 +646,10 @@ LinkSampling::infer()
 	lnextd[qc - 1][0]+=2;
       } else {
   // r accumulate all phi
+        printf("here\n");
 	double r = .0;
 	if (_iter > 1000 && (_active_comms[p] < _k / 10) && (_active_comms[q] < _k / 10))  {
+    printf("here 1\n");
 	  list<uint16_t> l1 = _active_k[p];
 	  list<uint16_t> l2 = _active_k[q];
 	  l1.sort();
@@ -725,6 +725,7 @@ LinkSampling::infer()
 	  }
 
 	} else {
+    printf("here 2\n");
 
 	  for (uint32_t k = 0; k < _k; ++k) {
 	    phi[k] = elogpid[p][k] + elogpid[q][k] + elogbetad[k][0];
@@ -763,7 +764,7 @@ LinkSampling::infer()
 	}
       }
       if (n % 1000 == 0) {
-	printf("\riteration %d: processing %d links", _iter, n);
+	printf("\riteration %d: processing %d links\n", _iter, n);
 	fflush(stdout);
       }
     }
@@ -799,12 +800,12 @@ LinkSampling::infer()
     // Update etas and deltas
     // Convert to Eigen Matrix
     for (uint32_t i = 0; i < _n; ++i){
-      for (uint32_t j = 0; j < _k; ++i){
+      for (uint32_t j = 0; j < _k; ++j){
         _eigen_phi_bar(i, j) = mphid[i][j];
       }
     }
 
-    Eigen::MatrixXd eta_g_top = Eigen::MatrixXd::Zero(_k, 1);
+    Eigen::MatrixXd eta_g_top = Eigen::MatrixXd::Zero(1, _k);
     for (uint32_t i = 0; i < _n; ++i){
       for (uint32_t j = 0; j < _gau; ++j){
         eta_g_top += _network.get_gau(i, j) * _eigen_phi_bar.row(i);
@@ -824,16 +825,27 @@ LinkSampling::infer()
       eta_g_bot += _gau * _gammat_invert.row(i).asDiagonal();
     }
 
-    _eta_gau = eta_g_bot * eta_g_top;
+    _eta_gau = eta_g_top * eta_g_bot;
     // Calculate eta_G
 
-    alglib::real_1d_array x_g_d;
+    printf("delta_gau: %f\n", _delta_gau);
+
+    std::ostringstream strs;
+    strs << _delta_gau;
+    std::string str = strs.str();
+
+    // real_1d_array x = "[0,0]";
+    std::string s = "[" + str + "]";
+    const char * tmp = s.c_str();
+    // real_1d_array x = c;
+
+    alglib::real_1d_array x_g_d = tmp;
     alglib::minlbfgsstate state;
     alglib::minlbfgsreport rep;
-    fprintf(stderr, "Running: %d\n", _iter);
+    printf("Running: %d\n", _iter);
     if (_iter == 1){
-      double tmp[] = {_delta_gau};
-      x_g_d.setcontent(1,tmp);
+      // double tmp[] = {_delta_gau};
+      // x_g_d.setcontent(1,tmp);
 
       double epsg = 0.0000000001;
       double epsf = 0;
@@ -847,8 +859,8 @@ LinkSampling::infer()
       alglib::minlbfgsresults(state, x_g_d, rep);
       _delta_gau = *x_g_d.getcontent();
     } else {
-      double tmp[] = {_delta_gau};
-      x_g_d.setcontent(1,tmp);
+      // double tmp[] = {_delta_gau};
+      // x_g_d.setcontent(1,tmp);
       alglib::minlbfgsrestartfrom(state, x_g_d);
       alglib::minlbfgsoptimize(state, LinkSampling::grad, NULL, (void *)this);
       alglib::minlbfgsresults(state, x_g_d, rep);

@@ -70,6 +70,7 @@
 #include <stdio.h>
 #include <math.h>
 #include "optimization.h"
+#include <sstream>
 
 using namespace alglib;
 
@@ -92,7 +93,19 @@ int main(int argc, char **argv)
     // This example demonstrates minimization of f(x,y) = 100*(x+3)^4+(y-3)^4
     // using LBFGS method.
     //
-    real_1d_array x = "[0,0]";
+    double y = 0.0;
+
+    std::ostringstream strs;
+    strs << y;
+    std::string str = strs.str();
+
+    // real_1d_array x = "[0,0]";
+    std::string s = "[" + str + "," + str + "]";
+    const char * c = s.c_str();
+    real_1d_array x = c;
+    // double tmp[] = {0, 0};
+    // real_1d_array x;
+    // x.setcontent(1, tmp);
     double epsg = 0.0000000001;
     double epsf = 0;
     double epsx = 0;
