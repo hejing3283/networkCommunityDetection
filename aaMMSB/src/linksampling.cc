@@ -830,23 +830,15 @@ LinkSampling::infer()
 
     printf("delta_gau: %f\n", _delta_gau);
 
-    std::ostringstream strs;
-    strs << _delta_gau;
-    std::string str = strs.str();
+    alglib::real_1d_array x_g_d;// = tmp;
+    double tmp[] = {_delta_gau};
+    x_g_d.setcontent(1,tmp);
 
-    // real_1d_array x = "[0,0]";
-    std::string s = "[" + str + "]";
-    const char * tmp = s.c_str();
-    // real_1d_array x = c;
-
-    alglib::real_1d_array x_g_d = tmp;
     alglib::minlbfgsstate state;
     alglib::minlbfgsreport rep;
     printf("Running: %d\n", _iter);
-    if (_iter == 1){
-      // double tmp[] = {_delta_gau};
-      // x_g_d.setcontent(1,tmp);
 
+    if (_iter == 0) {
       double epsg = 0.0000000001;
       double epsf = 0;
       double epsx = 0;
@@ -857,15 +849,17 @@ LinkSampling::infer()
       alglib::minlbfgssetcond(state, epsg, epsf, epsx, maxits);
       alglib::minlbfgsoptimize(state, LinkSampling::grad, NULL, (void *)this);
       alglib::minlbfgsresults(state, x_g_d, rep);
-      _delta_gau = *x_g_d.getcontent();
+      std::cout << "abc: " << x_g_d[0] << std::endl;
+      _delta_gau = x_g_d[0];
+
     } else {
-      // double tmp[] = {_delta_gau};
-      // x_g_d.setcontent(1,tmp);
+      std::cout << "asdf: " << x_g_d[0] << std::endl;
       alglib::minlbfgsrestartfrom(state, x_g_d);
       alglib::minlbfgsoptimize(state, LinkSampling::grad, NULL, (void *)this);
       alglib::minlbfgsresults(state, x_g_d, rep);
 
-      _delta_gau = *x_g_d.getcontent();
+      std::cout << "def: " << x_g_d[0] << std::endl;
+      _delta_gau = x_g_d[0];
     }
 
     // Edit

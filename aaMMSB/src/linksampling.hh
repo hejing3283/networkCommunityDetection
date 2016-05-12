@@ -40,28 +40,21 @@ public:
   //edits
   void func_gau_delta(const alglib::real_1d_array &x_g_d, double &func_g_d, alglib::real_1d_array &grad_d_g, void *ptr) {
     fprintf(stderr, "In func_gau_delta in linksampling.hh\n");
-    printf("yo0\n");
-    printf("%d\n", _env.n);
-    printf("%d\n", _env.dgau);
-    printf("%f\n", x_g_d[0]);
+    std::cout << "yo" << std::endl;
     grad_d_g[0] = _env.n * _env.dgau * 1.0/(2 * x_g_d[0]);
-    printf("yo1\n");
     func_g_d = 0.5 * _env.n * _env.dgau * log(2 * M_PI * x_g_d[0]);
-    printf("yo2\n");
-    Eigen::MatrixXd t_1_g = _eta_gau.transpose() * _eigen_phi_bar.row(0);
-    printf("yo3\n");
-    Eigen::MatrixXd t_2_g = _eta_gau.transpose() * _eigen_phi_bar.row(0).asDiagonal() * _eta_gau;
-    printf("yo4\n");
+    std::cout << "yo1" << std::endl;
+    // Eigen::MatrixXd t_1_g = _eta_gau.transpose() * _eigen_phi_bar.row(0);
+    // Eigen::VectorXd vec = _eigen_phi_bar.row(0);
+    // Eigen::MatrixXd t_2_g = _eta_gau * Eigen::MatrixXd(vec.asDiagonal()) * _eta_gau.transpose();
 //          double &func_gdcommon;
     for (uint32_t i = 0; i < _env.n; ++i){
-      printf("yo5\n");
       for (uint32_t j = 0; j < _env.dgau; ++j){
-        printf("yo6\n");
+        std::cout << "yo2" << std::endl;
         // To prevent overloading
         Eigen::MatrixXd t_1_g = _eta_gau.transpose() * _eigen_phi_bar.row(i);
-        printf("yo7\n");
-        Eigen::MatrixXd t_2_g = _eta_gau.transpose() * _eigen_phi_bar.row(i).asDiagonal() * _eta_gau;
-        printf("yo8\n");
+        Eigen::VectorXd vec = _eigen_phi_bar.row(i);
+        Eigen::MatrixXd t_2_g = _eta_gau * Eigen::MatrixXd(vec.asDiagonal()) * _eta_gau.transpose();
         grad_d_g[0] += - pow(_network.get_gau(i, j),2) / (4 * pow(x_g_d[0], 2)) +
                       (1.0/ pow(x_g_d[0], 2))  *
                       (t_1_g(0,0) * _network.get_gau(i, j) - 0.5 * t_2_g(0,0));
@@ -128,7 +121,7 @@ private:
   void get_Epi(uint32_t n, Array &Epi);
   uint32_t most_likely_group(uint32_t p);
 
-  static void grad(const alglib::real_1d_array &x_g_d,double &func_g_d, alglib::real_1d_array &grad_d_g, void *ptr){
+  static void grad(const alglib::real_1d_array &x_g_d, double &func_g_d, alglib::real_1d_array &grad_d_g, void *ptr){
     ((LinkSampling *)(ptr))->func_gau_delta(x_g_d, func_g_d, grad_d_g, NULL);
   }
 

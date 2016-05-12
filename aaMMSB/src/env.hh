@@ -131,7 +131,7 @@ public:
   //edit: parameters for GLM
   double delta_bin;
   Eigen::MatrixXd eta_bin;
-  double delta_gau;
+  double delta_gau = 1;
   Eigen::MatrixXd eta_gau;
   Eigen::MatrixXd eigen_phi_bar;
   //edit
