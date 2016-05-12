@@ -47,24 +47,35 @@ public:
     std::cout << x_g_d[0] << std::endl;
     grad_d_g[0] = _env.n * _env.dgau * 1.0/(2 * x_g_d[0]);
     func_g_d = 0.5 * _env.n * _env.dgau * log(2 * M_PI * x_g_d[0]);
-    std::cout << "yo1" << std::endl;
+    std::cout << "bef" << func_g_d << std::endl;
+    std::cout << "bef" << grad_d_g[0] << std::endl;
+    // std::cout << "yo1" << std::endl;
 //          double &func_gdcommon;
     for (uint32_t i = 0; i < _env.n; ++i){
       for (uint32_t j = 0; j < _env.dgau; ++j){
-        std::cout << "yo2" << std::endl;
+        // std::cout << "yo2" << std::endl;
         // To prevent overloading
         Eigen::MatrixXd t_1_g = _eta_gau.transpose() * _eigen_phi_bar.row(i);
+        std::cout << _eta_gau << std::endl;
+        std::cout << _eigen_phi_bar.row(i) << std::endl;
         Eigen::VectorXd vec = _eigen_phi_bar.row(i);
         Eigen::MatrixXd t_2_g = _eta_gau * Eigen::MatrixXd(vec.asDiagonal()) * _eta_gau.transpose();
+        // std::cout << t_2_g.rows() << " " << t_2_g.cols() << std::endl;
         grad_d_g[0] += - pow(_network.get_gau(i, j),2) / (4 * pow(x_g_d[0], 2)) +
                       (1.0/ pow(x_g_d[0], 2))  *
                       (t_1_g(0,0) * _network.get_gau(i, j) - 0.5 * t_2_g(0,0));
         func_g_d -= - pow(_network.get_gau(i, j),2) / (4 * pow(x_g_d[0], 2)) +
                 (1.0/ pow(x_g_d[0], 2))  *
                 (t_1_g(0,0) * _network.get_gau(i, j) - 0.5 * t_2_g(0,0));
+        // std::cout << i << j << t_1_g(0,0) << std::endl;
+        // std::cout << i << j << t_2_g(0,0) << std::endl;
       }
     }
+    // std::cout << "aft" << func_g_d << std::endl;
+    // std::cout << "aft" << grad_d_g[0] << std::endl;
   }
+
+
 
     //edits
 

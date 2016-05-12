@@ -843,8 +843,9 @@ LinkSampling::infer()
       double epsf = 0;
       double epsx = 0;
       alglib::ae_int_t maxits = 0;
-      
+
       // define function
+      // std::cout << state << std::endl;
       alglib::minlbfgscreate(1, x_g_d, state);
       alglib::minlbfgssetcond(state, epsg, epsf, epsx, maxits);
       alglib::minlbfgsoptimize(state, LinkSampling::grad, NULL, (void *)this);

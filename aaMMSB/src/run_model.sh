@@ -1,4 +1,4 @@
-workDir=/Users/serena/Desktop/research2016/our_code/networkCommunityDetection/aaMMSB
+workDir="/Users/Sky/Dropbox/Columbia/Spring_2016/Research/networkCommunityDetection/aaMMSB"
 edgefile=$workDir/dat/matrix.txt
 xgaufile=$workDir/dat/attributes_gau.txt
 xbinfile=$workDir/dat/attributes_bin.txt
