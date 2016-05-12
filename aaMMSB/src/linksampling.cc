@@ -838,7 +838,7 @@ LinkSampling::infer()
     alglib::minlbfgsreport rep;
     printf("Running: %d\n", _iter);
 
-    if (_iter == 0) {
+    // if (_iter == 0) {
       double epsg = 0.0000000001;
       double epsf = 0;
       double epsx = 0;
@@ -852,15 +852,17 @@ LinkSampling::infer()
       std::cout << "abc: " << x_g_d[0] << std::endl;
       _delta_gau = x_g_d[0];
 
-    } else {
-      std::cout << "asdf: " << x_g_d[0] << std::endl;
-      alglib::minlbfgsrestartfrom(state, x_g_d);
-      alglib::minlbfgsoptimize(state, LinkSampling::grad, NULL, (void *)this);
-      alglib::minlbfgsresults(state, x_g_d, rep);
+    // } else {
+    //   std::cout << "asdf: " << x_g_d[0] << std::endl;
+    //   alglib::minlbfgsrestartfrom(state, x_g_d);
+    //   std::cout << "a;lsdkjf" << std::endl;
+    //   std::cout << "lol" << x_g_d[0] << std::endl;
+    //   alglib::minlbfgsoptimize(state, LinkSampling::grad, NULL, (void *)this);
+    //   alglib::minlbfgsresults(state, x_g_d, rep);
 
-      std::cout << "def: " << x_g_d[0] << std::endl;
-      _delta_gau = x_g_d[0];
-    }
+    //   std::cout << "def: " << x_g_d[0] << std::endl;
+    //   _delta_gau = x_g_d[0];
+    // }
 
     // Edit
 
