@@ -39,16 +39,16 @@ public:
 //  void func_gau_delta(const real_1d_array &x,double &func_gdcommon,  double &func_g_d, double &grad_d_g, void *ptr);
   //edits
   void func_gau_delta(const alglib::real_1d_array &x_g_d, double &func_g_d, alglib::real_1d_array &grad_d_g, void *ptr) {
-    fprintf(stderr, "In func_gau_delta in linksampling.hh\n");
-    std::cout << "yo: " << std::endl;
+    // fprintf(stderr, "In func_gau_delta in linksampling.hh\n");
+    // std::cout << "yo: " << std::endl;
     if (x_g_d.getcontent() == NULL) {
       std::cout << "NULL" << std::endl;
     }
     std::cout << x_g_d[0] << std::endl;
     grad_d_g[0] = _env.n * _env.dgau * 1.0/(2 * x_g_d[0]);
     func_g_d = 0.5 * _env.n * _env.dgau * log(2 * M_PI * x_g_d[0]);
-    std::cout << "bef" << func_g_d << std::endl;
-    std::cout << "bef" << grad_d_g[0] << std::endl;
+    // std::cout << "bef" << func_g_d << std::endl;
+    // std::cout << "bef" << grad_d_g[0] << std::endl;
     // std::cout << "yo1" << std::endl;
 //          double &func_gdcommon;
     for (uint32_t i = 0; i < _env.n; ++i){
@@ -56,8 +56,8 @@ public:
         // std::cout << "yo2" << std::endl;
         // To prevent overloading
         Eigen::MatrixXd t_1_g = _eta_gau.transpose() * _eigen_phi_bar.row(i);
-        std::cout << _eta_gau << std::endl;
-        std::cout << _eigen_phi_bar.row(i) << std::endl;
+        // std::cout << _eta_gau << std::endl;
+        // std::cout << _eigen_phi_bar.row(i) << std::endl;
         Eigen::VectorXd vec = _eigen_phi_bar.row(i);
         Eigen::MatrixXd t_2_g = _eta_gau * Eigen::MatrixXd(vec.asDiagonal()) * _eta_gau.transpose();
         // std::cout << t_2_g.rows() << " " << t_2_g.cols() << std::endl;
@@ -104,6 +104,11 @@ private:
 
   void validation_likelihood(double &a, double &a0, double &a1);
   void precision_likelihood();
+
+  // Edit
+  double attribute_likelihood_gau(Eigen::MatrixXd _eigen_phi_bar, Eigen::MatrixXd _eta_gau, double _delta_gau) const;
+  double attribute_likelihood_bin(Eigen::MatrixXd _eigen_phi_bar, Eigen::MatrixXd _eta_bin, double _delta_bin) const;
+  // Edit
 
   int load_model();
   void load_test_sets();

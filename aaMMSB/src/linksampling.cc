@@ -725,7 +725,7 @@ LinkSampling::infer()
 	  }
 
 	} else {
-    printf("here 2\n");
+    // printf("here 2\n");
 
 	  for (uint32_t k = 0; k < _k; ++k) {
 	    phi[k] = elogpid[p][k] + elogpid[q][k] + elogbetad[k][0];
@@ -816,7 +816,9 @@ LinkSampling::infer()
     Eigen::MatrixXd _gammat_invert = Eigen::MatrixXd::Zero(_n, _k);
     for (uint32_t i = 0; i < _n; ++i){
       for (uint32_t j = 0; j < _gau; ++j){
-        _gammat_invert(i, j) = 1.0 / _eigen_phi_bar(i, j);
+        if (_eigen_phi_bar(i, j) != 0) {
+          _gammat_invert(i, j) = 1.0 / _eigen_phi_bar(i, j);
+        }
       }
     }
 
@@ -825,6 +827,9 @@ LinkSampling::infer()
       eta_g_bot += _gau * _gammat_invert.row(i).asDiagonal();
     }
 
+    // std::cout << eta_g_top << std::endl;
+    // std::cout << _gammat_invert << std::endl;
+    // std::cout << eta_g_bot << std::endl;
     _eta_gau = eta_g_top * eta_g_bot;
     // Calculate eta_G
 
@@ -850,7 +855,7 @@ LinkSampling::infer()
       alglib::minlbfgssetcond(state, epsg, epsf, epsx, maxits);
       alglib::minlbfgsoptimize(state, LinkSampling::grad, NULL, (void *)this);
       alglib::minlbfgsresults(state, x_g_d, rep);
-      std::cout << "abc: " << x_g_d[0] << std::endl;
+      // std::cout << "abc: " << x_g_d[0] << std::endl;
       _delta_gau = x_g_d[0];
 
     // } else {
